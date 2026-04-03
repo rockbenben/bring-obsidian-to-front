@@ -1,4 +1,4 @@
-# Bring Obsidian to Front
+# Bring to Front
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rockbenben/bring-obsidian-to-front?style=for-the-badge&sort=semver)](https://github.com/rockbenben/bring-obsidian-to-front/releases/latest)
 [![GitHub License](https://img.shields.io/github/license/rockbenben/bring-obsidian-to-front?style=for-the-badge)](LICENSE)
@@ -30,7 +30,7 @@
 3. 将插件文件夹复制到你的 vault 插件目录：
 
    ```text
-   YourVault/.obsidian/plugins/bring-obsidian-to-front/
+   YourVault/.obsidian/plugins/bring-to-front/
    ```
 
 4. 重启 Obsidian 或重新加载插件
@@ -45,7 +45,7 @@
 
 ## 配置
 
-打开设置 -> 社区插件 -> Bring Obsidian to Front。
+打开设置 -> 社区插件 -> Bring to Front。
 
 ### 设置项
 

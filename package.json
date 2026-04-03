@@ -1,7 +1,7 @@
 {
-  "name": "bring-obsidian-to-front",
-  "version": "2.0.0",
-  "description": "When Obsidian is in the background, automatically brings the window to front on new modals or notices.",
+  "name": "bring-to-front",
+  "version": "2.0.1",
+  "description": "Automatically brings the window to front when modals or notices appear in the background.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

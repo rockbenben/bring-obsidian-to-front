@@ -1,9 +1,9 @@
 {
-  "id": "bring-obsidian-to-front",
-  "name": "Bring Obsidian to Front",
-  "version": "2.0.0",
+  "id": "bring-to-front",
+  "name": "Bring to Front",
+  "version": "2.0.1",
   "minAppVersion": "0.15.0",
-  "description": "When Obsidian is in the background, automatically brings the window to front on new modals or notices.",
+  "description": "Automatically brings the window to front when modals or notices appear in the background.",
   "author": "rockbenben",
   "authorUrl": "https://github.com/rockbenben",
   "isDesktopOnly": true

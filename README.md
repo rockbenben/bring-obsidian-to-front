@@ -1,4 +1,4 @@
-# Bring Obsidian to Front
+# Bring to Front
 
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rockbenben/bring-obsidian-to-front?style=for-the-badge&sort=semver)](https://github.com/rockbenben/bring-obsidian-to-front/releases/latest)
 [![GitHub License](https://img.shields.io/github/license/rockbenben/bring-obsidian-to-front?style=for-the-badge)](LICENSE)
@@ -30,7 +30,7 @@ When Obsidian is in the background and a modal or notice appears, this plugin au
 3. Copy the plugin folder to your vault's plugins directory:
 
    ```text
-   YourVault/.obsidian/plugins/bring-obsidian-to-front/
+   YourVault/.obsidian/plugins/bring-to-front/
    ```
 
 4. Restart Obsidian or reload plugins
@@ -45,7 +45,7 @@ When Obsidian is in the background and a modal or notice appears, this plugin au
 
 ## Configuration
 
-Open Settings -> Community Plugins -> Bring Obsidian to Front.
+Open Settings -> Community Plugins -> Bring to Front.
 
 ### Settings
 
