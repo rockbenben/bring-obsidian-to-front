@@ -1,154 +1,109 @@
-# Bring Reminders to Front
+# Bring Obsidian to Front
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rockbenben/bring-reminders-front?style=for-the-badge&sort=semver)](https://github.com/rockbenben/bring-reminders-front/releases/latest)
-[![GitHub License](https://img.shields.io/github/license/rockbenben/bring-reminders-front?style=for-the-badge)](LICENSE)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rockbenben/bring-obsidian-to-front?style=for-the-badge&sort=semver)](https://github.com/rockbenben/bring-obsidian-to-front/releases/latest)
+[![GitHub License](https://img.shields.io/github/license/rockbenben/bring-obsidian-to-front?style=for-the-badge)](LICENSE)
 
-🇨🇳 中文 | [🇺🇸 English](README.md)
+[English](README.md) | 中文
 
-## 描述
+## 简介
 
-当 `obsidian-reminder` 插件的提醒弹窗出现时，Bring Reminders to Front 会自动将 Obsidian 窗口带到前台，并聚焦提醒弹窗的容器，保证你不会错过任何提醒。
+当 Obsidian 处于后台时，如果出现弹窗或通知，本插件会自动将窗口置顶。**无需配置**，安装启用即可使用。可通过关键词和监听范围进行过滤，仅对特定内容触发。
 
-## ✨ 核心功能
+> **仅桌面端**（Windows / macOS / Linux），依赖 Electron API 实现窗口管理。
 
-- 🔔 智能检测：智能识别 obsidian-reminder 插件的提醒弹窗
-- 🪟 自动置前：提醒出现时将 Obsidian 窗口带到前台
-- ⏱️ 冷却保护：可配置的最小聚焦间隔，防止频繁抢焦
-- 🌐 双语界面：完整支持中英文界面，自动检测
+![demo](demo.gif)
 
-## 📦 安装方法
+## 核心功能
 
-### 方法一：从 Obsidian 社区插件安装（尚未上架）
+- **自动置顶：** 当 Obsidian 处于后台时，出现弹窗或通知自动将窗口带到前台
+- **关键词过滤：** 可选的逗号分隔关键词，出现任一关键词即触发
+- **灵活监听：** 可监听弹窗、通知、两者兼监，或自定义 CSS 选择器
+- **冷却保护：** 可配置的最小聚焦间隔，避免频繁切换
+- **双语界面：** 完整的中英文支持，自动检测语言
 
-1. 打开 Obsidian 设置 (⚙️)
-2. 导航到 社区插件
-3. 如果尚未关闭，请先关闭 安全模式
-4. 点击 浏览 并搜索 “Bring Reminders to Front”
-5. 点击 安装 然后 启用
+## 安装
 
-### 方法二：手动安装
+### 方式一：手动安装
 
-1. 从 [GitHub Releases](https://github.com/rockbenben/bring-reminders-front/releases) 下载最新版本
+1. 从 [GitHub Releases](https://github.com/rockbenben/bring-obsidian-to-front/releases) 下载最新版本
 2. 解压下载的文件
-3. 将插件文件夹复制到你的库的插件目录：
+3. 将插件文件夹复制到你的 vault 插件目录：
 
    ```text
-   你的库/.obsidian/plugins/bring-reminders-front/
+   YourVault/.obsidian/plugins/bring-obsidian-to-front/
    ```
 
 4. 重启 Obsidian 或重新加载插件
-5. 在 设置 → 社区插件 中启用插件
+5. 在设置 -> 社区插件中启用该插件
 
-### 方法三：使用 BRAT（测试版自动更新工具）
+### 方式二：使用 BRAT
 
 1. 安装 [BRAT 插件](https://github.com/TfTHacker/obsidian42-brat)
-2. 打开 BRAT 设置并点击 添加测试版插件
-3. 输入仓库地址：rockbenben/bring-reminders-front
-4. 点击 添加插件 并启用
+2. 打开 BRAT 设置，点击 Add Beta Plugin
+3. 输入仓库地址：rockbenben/bring-obsidian-to-front
+4. 点击 Add Plugin 并启用
 
-## ⚙️ 配置选项
+## 配置
 
-通过 设置 → 社区插件 → Bring Reminders to Front 访问插件设置。
+打开设置 -> 社区插件 -> Bring Obsidian to Front。
 
-| 设置项       | 说明                                           | 默认值    | 范围              |
-| ------------ | ---------------------------------------------- | --------- | ----------------- |
-| 最小聚焦间隔 | 两次连续聚焦之间的最小时间（防止频繁抢焦）     | 10 秒     | ≥ 1 秒            |
-| 检测间隔     | 兜底的周期性检测频率（已启用观察器与初始检查） | 5000 毫秒 | ≥ 100 毫秒        |
-| 语言         | 界面语言设置                                   | 自动检测  | 自动/English/中文 |
+### 设置项
 
-> 数字输入已优化：设置项采用数字输入框，带最小值与步进，并附带校验逻辑以避免误输。
+| 设置             | 说明                                                | 默认值        | 范围                     |
+| ---------------- | --------------------------------------------------- | ------------- | ------------------------ |
+| 语言             | 界面语言                                            | 自动检测      | 自动 / English / 中文    |
+| 关键词           | 逗号分隔的关键词，不区分大小写（留空 = 匹配全部）    | 空            | 任意文本                 |
+| 监听范围         | 监听哪类 DOM 元素                                   | 弹窗和通知    | 弹窗 / 通知 / 两者 / 自定义 |
+| 自定义 CSS 选择器| 自定义选择器（仅当范围 = 自定义时）                  | 空            | 合法 CSS 选择器          |
+| 聚焦冷却         | 两次置顶之间的最小间隔秒数（0 = 不限制）             | 5 秒          | >= 0                     |
+| 调试模式         | 在控制台输出匹配日志                                | 关闭          | 开 / 关                  |
 
-### 🔧 高级配置技巧
+### 配置示例
 
-- 较低的检测间隔（100-500 ms）= 响应更快但 CPU 占用更高
-- 较高的检测间隔（≥ 2000 ms）= 响应稍慢但更省电
-- 较短的聚焦间隔（1-30 s）= 适合频繁提醒
-- 较长的聚焦间隔（≥ 120 s）= 减少干扰
-- 建议：检测间隔 ≤ 聚焦间隔，以获得更优平衡
+| 用途             | 关键词          | 监听范围                              |
+| ---------------- | --------------- | ------------------------------------- |
+| 任意弹窗/通知    | （留空）        | 弹窗和通知                            |
+| 提醒弹窗         | `Snooze, Done`  | 弹窗                                  |
+| 错误提示         | `error, failed` | 通知                                  |
+| 指定插件         | （留空）        | 自定义：`[data-type="my-plugin"]`     |
 
-## 🔧 工作原理
+### 调优建议
 
-插件使用智能检测机制来识别提醒通知：
+- 聚焦冷却越短（1-30 秒）= 适合频繁触发
+- 聚焦冷却越长（>= 120 秒）= 干扰更少
 
-1. 弹窗检测：通过 MutationObserver 监控新的弹窗容器
-2. 提醒识别：基于类名/标记/文本特征识别提醒弹窗
-3. 窗口置前：必要时将 Obsidian 窗口带到前台
-4. 冷却验证：确保距上次聚焦已超过最小间隔
-5. 执行聚焦：为弹窗容器设置 tabindex 并尝试多次聚焦，同时滚动到可视区域
-6. 状态重置：记录已处理弹窗并恢复常规监听
+## 工作原理
 
-## 🎯 检测逻辑
+1. **MutationObserver：** 实时监听 DOM 中与配置范围匹配的新增元素
+2. **关键词匹配：** 如果配置了关键词，检查元素文本内容是否匹配
+3. **冷却检查：** 确保两次置顶之间有最小间隔
+4. **窗口置顶：** 通过 Electron API 将窗口置顶（恢复、显示、alwaysOnTop 技巧、聚焦）
 
-- 具有提醒特定类的弹窗容器（如 .reminder-modal）或标记（如 [data-reminder]）
-- DOM MutationObserver 实时监听 + 启动时立即检查 + 可配置的定时兜底
-- 少量文本/aria 模式兜底（如 Snooze / Done / “提醒”），不依赖 innerHTML
+## 故障排除
 
-## 🚀 使用步骤
-
-1. 启用本插件（Bring Reminders to Front）
-2. 安装并启用 obsidian-reminder 插件
-3. 在设置中根据需要调整“最小聚焦间隔/检测间隔”
-4. 使用 obsidian-reminder 创建一个测试提醒
-5. 等待提醒触发，插件会在后台自动工作
-6. 观察效果：Obsidian 被带到前台且提醒弹窗容器已聚焦
-
-## 🐛 故障排除
-
-### 常见问题和解决方案
-
-| 问题         | 可能原因                        | 解决方案                          |
-| ------------ | ------------------------------- | --------------------------------- |
-| 置顶过于频繁 | 冷却间隔过短                    | 增加“最小聚焦间隔”时间            |
-| CPU 占用较高 | 检测间隔过低                    | 增加“检测间隔”（建议 ≥ 1000 ms）  |
-| 无法检测提醒 | 未安装/未启用 obsidian-reminder | 安装并启用 obsidian-reminder 插件 |
-| 语言未切换   | 缓存或重载问题                  | 更改语言后重启 Obsidian           |
+| 问题             | 可能原因                | 解决方案                                |
+| ---------------- | ----------------------- | --------------------------------------- |
+| 频繁置顶         | 聚焦冷却设置过短        | 增加聚焦冷却时间                        |
+| 未检测到         | 范围或关键词配置有误    | 检查设置；尝试关键词留空 + 范围「两者」 |
+| 语言未切换       | 缓存/重载问题           | 更改语言后重启 Obsidian                 |
 
 ### 调试步骤
 
-1. 确认本插件与 obsidian-reminder 均已启用
-2. 将检测间隔设置为 500-2000 ms 范围进行测试
-3. 用最简单的提醒内容进行验证
-4. 打开开发者工具查看控制台是否有报错
-5. 若问题持续，重启 Obsidian 后重试
+1. 在设置中启用调试模式
+2. 打开开发者工具控制台（Ctrl+Shift+I）
+3. 触发你期望匹配的条件
+4. 检查控制台中的 `[Bring to Front]` 日志消息
+5. 在控制台运行 `document.querySelector("你的选择器")` 验证 CSS 选择器是否正确
 
-## 🛠️ 开发
-
-### 开始使用
+## 开发
 
 ```bash
-# 克隆仓库
-git clone https://github.com/rockbenben/bring-reminders-front.git
-cd bring-reminders-front
-
-# 安装依赖
+git clone https://github.com/rockbenben/bring-obsidian-to-front.git
+cd bring-obsidian-to-front
 npm install
-
-# 开发模式构建（支持热重载）
-npm run dev
-
-# 生产模式构建
-npm run build
+npm run dev    # 开发模式，支持热重载
+npm run build  # 生产构建
 ```
-
-### 项目结构
-
-```text
-bring-reminders-front/
-├── main.ts              # 主插件代码
-├── manifest.json        # 插件清单
-├── package.json         # Node.js 依赖
-├── tsconfig.json        # TypeScript 配置
-├── esbuild.config.mjs   # 构建配置
-└── README.md           # 文档
-```
-
-### 贡献
-
-1. Fork 此仓库
-2. 创建功能分支：`git checkout -b feature-name`
-3. 进行更改并彻底测试
-4. 提交清晰的信息：`git commit -m "feat: 描述本次更改"`
-5. 推送并创建 Pull Request
 
 ## 许可证
 
@@ -156,9 +111,4 @@ MIT
 
 ## 支持
 
-如果你遇到任何问题或有建议，请在 GitHub 提交 issue。
-
-## 致谢
-
-- 感谢 Obsidian 团队提供的优秀平台
-- 感谢 obsidian-reminder 插件的开发者
+如遇到任何问题或有建议，请在 GitHub 上提交 issue。

@@ -1,154 +1,109 @@
-# Bring Reminders to Front
+# Bring Obsidian to Front
 
-[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rockbenben/bring-reminders-front?style=for-the-badge&sort=semver)](https://github.com/rockbenben/bring-reminders-front/releases/latest)
-[![GitHub License](https://img.shields.io/github/license/rockbenben/bring-reminders-front?style=for-the-badge)](LICENSE)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rockbenben/bring-obsidian-to-front?style=for-the-badge&sort=semver)](https://github.com/rockbenben/bring-obsidian-to-front/releases/latest)
+[![GitHub License](https://img.shields.io/github/license/rockbenben/bring-obsidian-to-front?style=for-the-badge)](LICENSE)
 
-🇺🇸 English | [🇨🇳 中文](README_zh.md)
+English | [中文](README_zh.md)
 
 ## Description
 
-When a reminder modal from the `obsidian-reminder` plugin appears, Bring Reminders to Front automatically brings the Obsidian window to the foreground and focuses the reminder modal container, ensuring you won't miss any reminders.
+When Obsidian is in the background and a modal or notice appears, this plugin automatically brings the window to the foreground. **Zero configuration needed** — install, enable, and it just works. Optionally filter by keywords and watch scope to trigger only on specific content.
 
-## ✨ Key Features
+> **Desktop only** (Windows / macOS / Linux). Requires Electron APIs for window management.
 
-- 🔔 Smart detection: Recognizes reminder modals from the obsidian-reminder plugin
-- 🪟 Auto bring-to-front: Brings Obsidian to the foreground when reminders appear
-- ⏱️ Cooldown protection: Configurable minimum focus interval to avoid focus thrashing
-- 🌐 Bilingual UI: Full English/Chinese support with auto detection
+![demo](demo.gif)
 
-## 📦 Installation
+## Key Features
 
-### Method 1: From Obsidian Community Plugins (Not published yet)
+- **Auto bring-to-front:** When Obsidian is in the background, automatically brings the window to front on new modals or notices
+- **Keyword filtering:** Optional comma-separated keywords to trigger only on specific content
+- **Flexible watch scope:** Monitor modals, notices, both, or custom CSS selectors
+- **Cooldown protection:** Configurable minimum focus interval to avoid focus thrashing
+- **Bilingual UI:** Full English/Chinese support with auto detection
 
-1. Open Obsidian Settings (⚙️)
-2. Navigate to Community Plugins
-3. Disable Safe Mode if it's enabled
-4. Click Browse and search for "Bring Reminders to Front"
-5. Click Install then Enable
+## Installation
 
-### Method 2: Manual Installation
+### Method 1: Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/rockbenben/bring-reminders-front/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/rockbenben/bring-obsidian-to-front/releases)
 2. Extract the downloaded files
 3. Copy the plugin folder to your vault's plugins directory:
 
    ```text
-   YourVault/.obsidian/plugins/bring-reminders-front/
+   YourVault/.obsidian/plugins/bring-obsidian-to-front/
    ```
 
 4. Restart Obsidian or reload plugins
-5. Enable the plugin in Settings → Community Plugins
+5. Enable the plugin in Settings -> Community Plugins
 
-### Method 3: Using BRAT (Beta Reviewers Auto-update Tool)
+### Method 2: Using BRAT (Beta Reviewers Auto-update Tool)
 
 1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat)
 2. Open BRAT settings and click Add Beta Plugin
-3. Enter the repository: rockbenben/bring-reminders-front
+3. Enter the repository: rockbenben/bring-obsidian-to-front
 4. Click Add Plugin and enable it
 
-## ⚙️ Configuration
+## Configuration
 
-Open Settings → Community Plugins → Bring Reminders to Front.
+Open Settings -> Community Plugins -> Bring Obsidian to Front.
 
-| Setting                | Description                                                         | Default     | Range                 |
-| ---------------------- | ------------------------------------------------------------------- | ----------- | --------------------- |
-| Minimum focus interval | Minimum time between consecutive focus actions (avoid focus thrash) | 10 seconds  | ≥ 1 second            |
-| Detection interval     | Fallback periodic scan (Observer + initial scan are already used)   | 5000 ms     | ≥ 100 ms              |
-| Language               | Interface language                                                  | Auto-detect | Auto / English / 中文 |
+### Settings
 
-> Numeric inputs are optimized with min/step and validation to prevent invalid values.
+| Setting            | Description                                                        | Default         | Range              |
+| ------------------ | ------------------------------------------------------------------ | --------------- | ------------------ |
+| Language           | Interface language                                                 | Auto-detect     | Auto / English / 中文 |
+| Keywords           | Comma-separated keywords to filter triggers, case-insensitive (empty = match all) | Empty           | Any text           |
+| Watch scope        | Which DOM elements to monitor                                      | Modals & Notices| Modals / Notices / Both / Custom |
+| Custom CSS selector| Custom selector (only when scope = Custom)                         | Empty           | Valid CSS selector |
+| Focus cooldown     | Minimum seconds between focus actions (0 = no cooldown)            | 5 seconds       | >= 0               |
+| Debug mode         | Log matching details to console                                    | Disabled        | On / Off           |
 
-### 🔧 Advanced Tips
+### Usage Examples
 
-- Lower detection interval (100–500 ms) = faster response, higher CPU
-- Higher detection interval (≥ 2000 ms) = slower response, better efficiency
-- Shorter focus interval (1–30 s) = for frequent reminders
-- Longer focus interval (≥ 120 s) = less intrusive
-- Recommendation: Detection interval ≤ focus interval for a better balance
+| Use Case            | Keywords        | Watch Scope |
+| ------------------- | --------------- | ----------- |
+| Any modal/notice    | (leave empty)   | Both        |
+| Reminder popup      | `Snooze, Done`  | Modals      |
+| Error alerts        | `error, failed` | Notices     |
+| Specific plugin     | (leave empty)   | Custom: `[data-type="my-plugin"]` |
 
-## 🧰 How It Works
+### Tips
 
-The plugin identifies reminder notifications with a lightweight detection flow:
+- Shorter focus cooldown (1-30 s) = for frequent triggers
+- Longer focus cooldown (>= 120 s) = less intrusive
 
-1. Modal detection: Use MutationObserver to watch for new modal containers
-2. Reminder identification: Check classes/markers/text traits to confirm reminder modals
-3. Bring to front: Raise Obsidian window when necessary
-4. Cooldown check: Ensure the minimum interval has elapsed since last focus
-5. Focus execution: Set tabindex and focus the modal container with retries; scroll into view
-6. State reset: Track processed modals and resume normal observation
+## How It Works
 
-## 🎯 Detection Logic
+1. **MutationObserver:** Watches the DOM in real time for new elements matching the configured scope
+2. **Keyword matching:** If keywords are configured, the element's text content is checked against them
+3. **Cooldown check:** Ensures minimum interval between consecutive focus actions
+4. **Bring to front:** Raises the Obsidian window via Electron APIs (restore, show, alwaysOnTop trick, focus)
 
-- Modal containers with reminder classes (e.g., .reminder-modal) or markers (e.g., [data-reminder])
-- Real-time DOM MutationObserver + immediate initial scan + configurable periodic fallback
-- Minimal text/aria patterns (e.g., Snooze / Done / "reminder"), without relying on innerHTML
+## Troubleshooting
 
-## 🚀 Usage
-
-1. Enable this plugin (Bring Reminders to Front)
-2. Install and enable the obsidian-reminder plugin
-3. Adjust Minimum Focus Interval / Detection Interval in settings as needed
-4. Create a test reminder with obsidian-reminder
-5. Wait for the reminder; the plugin runs automatically in the background
-6. Observe: Obsidian is brought to front and the reminder modal container is focused
-
-## 🐛 Troubleshooting
-
-### Common Issues and Solutions
-
-| Issue                  | Possible Cause                          | Solution                                 |
-| ---------------------- | --------------------------------------- | ---------------------------------------- |
-| Too frequent focusing  | Focus interval too short                | Increase Minimum Focus Interval          |
-| High CPU usage         | Detection interval too low              | Increase Detection Interval (≥ 1000 ms)  |
-| Not detecting          | obsidian-reminder not installed/enabled | Install and enable obsidian-reminder     |
-| Language not switching | Cache/reload issue                      | Restart Obsidian after changing language |
+| Issue                | Possible Cause               | Solution                          |
+| -------------------- | ---------------------------- | --------------------------------- |
+| Too frequent focusing| Focus cooldown too short     | Increase focus cooldown           |
+| Not detecting        | Wrong scope or keywords      | Check settings; try empty keywords with "Both" scope |
+| Language not switching| Cache/reload issue           | Restart Obsidian after changing language |
 
 ### Debug Steps
 
-1. Confirm both this plugin and obsidian-reminder are enabled
-2. Test with a detection interval between 500–2000 ms
-3. Validate with a simple reminder
-4. Open devtools console to check for errors
-5. Restart Obsidian if the issue persists
+1. Enable debug mode in settings
+2. Open devtools console (Ctrl+Shift+I)
+3. Trigger the condition you expect to match
+4. Check console for `[Bring to Front]` log messages
+5. Verify the CSS selector matches by running `document.querySelector("your-selector")` in console
 
-## 🛠️ Development
-
-### Getting Started
+## Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/rockbenben/bring-reminders-front.git
-cd bring-reminders-front
-
-# Install dependencies
+git clone https://github.com/rockbenben/bring-obsidian-to-front.git
+cd bring-obsidian-to-front
 npm install
-
-# Dev build with hot reload
-npm run dev
-
-# Production build
-npm run build
+npm run dev    # Dev build with hot reload
+npm run build  # Production build
 ```
-
-### Project Structure
-
-```text
-bring-reminders-front/
-├── main.ts              # Main plugin code
-├── manifest.json        # Plugin manifest
-├── package.json         # Node.js dependencies
-├── tsconfig.json        # TypeScript configuration
-├── esbuild.config.mjs   # Build configuration
-└── README.md           # Documentation
-```
-
-### Contributing
-
-1. Fork this repository
-2. Create a feature branch: `git checkout -b feature-name`
-3. Make changes and test thoroughly
-4. Commit with clear messages: `git commit -m "feat: describe the change"`
-5. Push and open a Pull Request
 
 ## License
 
@@ -157,8 +112,3 @@ MIT
 ## Support
 
 If you encounter any issues or have suggestions, please open an issue on GitHub.
-
-## Credits
-
-- Thanks to the Obsidian team for the great platform
-- Thanks to the obsidian-reminder plugin developers
