@@ -1,7 +1,7 @@
 {
-  "name": "bring-reminders-front",
-  "version": "1.0.6",
-  "description": "Obsidian plugin to focus window when reminder appears",
+  "name": "bring-obsidian-to-front",
+  "version": "2.0.0",
+  "description": "When Obsidian is in the background, automatically brings the window to front on new modals or notices.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -13,15 +13,16 @@
   "keywords": [
     "obsidian",
     "obsidian-plugin",
-    "obsidian-reminder"
+    "bring-to-front",
+    "window-focus"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/rockbenben/bring-reminders-front.git"
+    "url": "https://github.com/rockbenben/bring-obsidian-to-front.git"
   },
-  "homepage": "https://github.com/rockbenben/bring-reminders-front",
+  "homepage": "https://github.com/rockbenben/bring-obsidian-to-front",
   "bugs": {
-    "url": "https://github.com/rockbenben/bring-reminders-front/issues"
+    "url": "https://github.com/rockbenben/bring-obsidian-to-front/issues"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

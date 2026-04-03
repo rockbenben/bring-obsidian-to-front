@@ -25,366 +25,229 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // main.ts
 var main_exports = {};
 __export(main_exports, {
-  default: () => ReminderFocusPlugin
+  default: () => BringToFrontPlugin
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var translations = {
   en: {
-    focusInterval: "Minimum focus interval (seconds)",
-    focusIntervalDesc: "Minimum time between two consecutive window focus actions",
-    detectionInterval: "Detection interval (milliseconds)",
-    detectionIntervalDesc: "How often to check for reminder modals (lower values = more responsive, higher CPU usage)",
     language: "Language",
-    languageDesc: "Select display language for this plugin",
-    debugMode: "Debug mode",
-    debugModeDesc: "Enable detailed logging for troubleshooting (for developers)",
+    languageDesc: "Display language",
     auto: "Auto",
     chinese: "\u4E2D\u6587",
     english: "English",
-    reminderDetected: "Reminder detected, focusing window",
-    focusSkipped: "Window already active, skipping focus",
-    focusCooldown: "Focus on cooldown, skipping",
-    settingsSaved: "Settings saved successfully",
-    invalidInterval: "Please enter a valid number for focus interval (1 second or higher)",
-    invalidDetectionInterval: "Please enter a valid number for detection interval (100ms or higher)"
+    keywords: "Keywords (optional)",
+    keywordsDesc: "Leave empty to bring to front on any modal/notice when Obsidian is in the background. Add comma-separated keywords to trigger when any one of them appears.",
+    watchScope: "Watch scope",
+    watchScopeDesc: "Which elements to monitor",
+    scopeModal: "Modals",
+    scopeNotice: "Notices",
+    scopeBoth: "Modals & Notices",
+    scopeCustom: "Custom selector",
+    customSelector: "CSS Selector",
+    customSelectorDesc: 'Custom CSS selector (e.g. .modal-container, [data-type="my-plugin"])',
+    focusInterval: "Focus cooldown (seconds)",
+    focusIntervalDesc: "Minimum time between focus actions. Prevents repeated focus stealing. 0 = no cooldown",
+    debugMode: "Debug mode",
+    debugModeDesc: "Log matching details to console (Ctrl+Shift+I)",
+    matchDetected: "Match detected, bringing to front",
+    windowFocused: "Window already focused, skipping",
+    cooldownActive: "Cooldown active, skipping",
+    guide: "Quick Start Guide",
+    guideKeywords: "By default (no keywords), Obsidian is brought to front whenever a modal or notice appears while it is in the background. Add comma-separated keywords to only trigger when any keyword appears in the element text.",
+    guideScope: 'Watch scope: "Modals" watches popup dialogs, "Notices" watches toast messages, "Both" watches everything. Use "Custom" for advanced CSS selectors.',
+    guideExamples: "Examples",
+    guideEx1: 'Reminder popup \u2192 keywords "Snooze, Done", scope "Modals"',
+    guideEx2: 'Error alerts \u2192 keywords "error, failed", scope "Notices"',
+    guideEx3: 'All modals & notices \u2192 leave keywords empty, scope "Both" (default)',
+    guideTip: "Tip: To find a CSS selector \u2014 open DevTools (Ctrl+Shift+I), click the inspect icon (top-left of DevTools panel), click the target element, then use the class names shown in the Elements panel (e.g. .my-plugin-modal)."
   },
   zh: {
-    focusInterval: "\u6700\u5C0F\u805A\u7126\u95F4\u9694\uFF08\u79D2\uFF09",
-    focusIntervalDesc: "\u4E24\u6B21\u7A97\u53E3\u7F6E\u9876\u4E4B\u95F4\u7684\u6700\u5C0F\u65F6\u95F4\u95F4\u9694",
-    detectionInterval: "\u68C0\u6D4B\u95F4\u9694\uFF08\u6BEB\u79D2\uFF09",
-    detectionIntervalDesc: "\u68C0\u6D4B\u63D0\u9192\u5F39\u7A97\u7684\u9891\u7387\uFF08\u6570\u503C\u8D8A\u5C0F\u54CD\u5E94\u8D8A\u5FEB\uFF0C\u4F46CPU\u5360\u7528\u8D8A\u9AD8\uFF09",
     language: "\u8BED\u8A00",
-    languageDesc: "\u9009\u62E9\u63D2\u4EF6\u7684\u663E\u793A\u8BED\u8A00",
-    debugMode: "\u8C03\u8BD5\u6A21\u5F0F",
-    debugModeDesc: "\u542F\u7528\u8BE6\u7EC6\u65E5\u5FD7\u8BB0\u5F55\u7528\u4E8E\u6545\u969C\u6392\u9664\uFF08\u4F9B\u5F00\u53D1\u8005\u4F7F\u7528\uFF09",
+    languageDesc: "\u663E\u793A\u8BED\u8A00",
     auto: "\u81EA\u52A8",
     chinese: "\u4E2D\u6587",
     english: "English",
-    reminderDetected: "\u68C0\u6D4B\u5230\u63D0\u9192\uFF0C\u6B63\u5728\u7F6E\u9876\u7A97\u53E3",
-    focusSkipped: "\u7A97\u53E3\u5DF2\u5904\u4E8E\u6D3B\u52A8\u72B6\u6001\uFF0C\u8DF3\u8FC7\u7F6E\u9876",
-    focusCooldown: "\u805A\u7126\u51B7\u5374\u4E2D\uFF0C\u8DF3\u8FC7\u7F6E\u9876",
-    settingsSaved: "\u8BBE\u7F6E\u5DF2\u6210\u529F\u4FDD\u5B58",
-    invalidInterval: "\u8BF7\u8F93\u5165\u6709\u6548\u7684\u805A\u7126\u95F4\u9694\u6570\u5B57\uFF081\u79D2\u6216\u66F4\u9AD8\uFF09",
-    invalidDetectionInterval: "\u8BF7\u8F93\u5165\u6709\u6548\u7684\u68C0\u6D4B\u95F4\u9694\u6570\u5B57\uFF08100\u6BEB\u79D2\u6216\u66F4\u9AD8\uFF09"
+    keywords: "\u5173\u952E\u8BCD\uFF08\u53EF\u9009\uFF09",
+    keywordsDesc: "\u7559\u7A7A\u5373\u53EF\uFF1A\u540E\u53F0\u51FA\u73B0\u5F39\u7A97\u6216\u901A\u77E5\u65F6\u81EA\u52A8\u7F6E\u9876\u3002\u586B\u5199\u9017\u53F7\u5206\u9694\u7684\u5173\u952E\u8BCD\uFF0C\u51FA\u73B0\u4EFB\u4E00\u5373\u89E6\u53D1\u3002",
+    watchScope: "\u76D1\u542C\u8303\u56F4",
+    watchScopeDesc: "\u76D1\u542C\u54EA\u7C7B\u5143\u7D20",
+    scopeModal: "\u5F39\u7A97",
+    scopeNotice: "\u901A\u77E5",
+    scopeBoth: "\u5F39\u7A97\u548C\u901A\u77E5",
+    scopeCustom: "\u81EA\u5B9A\u4E49\u9009\u62E9\u5668",
+    customSelector: "CSS \u9009\u62E9\u5668",
+    customSelectorDesc: '\u81EA\u5B9A\u4E49 CSS \u9009\u62E9\u5668\uFF08\u5982 .modal-container\u3001[data-type="my-plugin"]\uFF09',
+    focusInterval: "\u805A\u7126\u51B7\u5374\uFF08\u79D2\uFF09",
+    focusIntervalDesc: "\u4E24\u6B21\u7F6E\u9876\u4E4B\u95F4\u7684\u6700\u5C0F\u95F4\u9694\uFF0C\u9632\u6B62\u53CD\u590D\u62A2\u7126\u30020 = \u4E0D\u9650\u5236",
+    debugMode: "\u8C03\u8BD5\u6A21\u5F0F",
+    debugModeDesc: "\u5728\u63A7\u5236\u53F0\uFF08Ctrl+Shift+I\uFF09\u8F93\u51FA\u5339\u914D\u65E5\u5FD7",
+    matchDetected: "\u68C0\u6D4B\u5230\u5339\u914D\uFF0C\u6B63\u5728\u7F6E\u9876",
+    windowFocused: "\u7A97\u53E3\u5DF2\u5728\u524D\u53F0\uFF0C\u8DF3\u8FC7",
+    cooldownActive: "\u51B7\u5374\u4E2D\uFF0C\u8DF3\u8FC7",
+    guide: "\u5165\u95E8\u6307\u5357",
+    guideKeywords: "\u9ED8\u8BA4\u65E0\u9700\u914D\u7F6E\uFF1A\u540E\u53F0\u51FA\u73B0\u5F39\u7A97\u6216\u901A\u77E5\u65F6\u81EA\u52A8\u7F6E\u9876\u3002\u5982\u9700\u8FC7\u6EE4\uFF0C\u586B\u5165\u9017\u53F7\u5206\u9694\u7684\u5173\u952E\u8BCD\uFF0C\u51FA\u73B0\u4EFB\u4E00\u5173\u952E\u8BCD\u5373\u89E6\u53D1\u3002",
+    guideScope: "\u76D1\u542C\u8303\u56F4\uFF1A\u300C\u5F39\u7A97\u300D\u76D1\u542C\u5BF9\u8BDD\u6846\u5F39\u7A97\uFF0C\u300C\u901A\u77E5\u300D\u76D1\u542C\u53F3\u4E0A\u89D2\u63D0\u793A\u6D88\u606F\uFF0C\u300C\u5F39\u7A97\u548C\u901A\u77E5\u300D\u540C\u65F6\u76D1\u542C\u4E24\u8005\u3002\u9700\u8981\u66F4\u7075\u6D3B\u7684\u5339\u914D\u8BF7\u9009\u300C\u81EA\u5B9A\u4E49\u300D\u8F93\u5165 CSS \u9009\u62E9\u5668\u3002",
+    guideExamples: "\u914D\u7F6E\u793A\u4F8B",
+    guideEx1: '\u63D0\u9192\u5F39\u7A97 \u2192 \u5173\u952E\u8BCD "Snooze, Done"\uFF0C\u8303\u56F4\u300C\u5F39\u7A97\u300D',
+    guideEx2: '\u9519\u8BEF\u63D0\u793A \u2192 \u5173\u952E\u8BCD "error, failed"\uFF0C\u8303\u56F4\u300C\u901A\u77E5\u300D',
+    guideEx3: "\u6240\u6709\u5F39\u7A97\u548C\u901A\u77E5 \u2192 \u5173\u952E\u8BCD\u7559\u7A7A\uFF0C\u8303\u56F4\u300C\u5F39\u7A97\u548C\u901A\u77E5\u300D\uFF08\u9ED8\u8BA4\uFF09",
+    guideTip: "\u63D0\u793A\uFF1A\u67E5\u627E CSS \u9009\u62E9\u5668\u2014\u2014\u6253\u5F00\u5F00\u53D1\u8005\u5DE5\u5177\uFF08Ctrl+Shift+I\uFF09\uFF0C\u70B9\u51FB\u5DE6\u4E0A\u89D2\u7684\u9009\u62E9\u5668\u56FE\u6807\uFF0C\u70B9\u51FB\u76EE\u6807\u5143\u7D20\uFF0C\u5728 Elements \u9762\u677F\u4E2D\u67E5\u770B class \u540D\u79F0\uFF08\u5982 .my-plugin-modal\uFF09\u3002"
   }
 };
+var SCOPE_SELECTORS = {
+  modal: ".modal-container",
+  notice: ".notice",
+  both: ".modal-container, .notice"
+};
 var DEFAULT_SETTINGS = {
-  focusInterval: 10,
-  detectionInterval: 5e3,
-  // 默认每5秒检测一次
+  keywords: "",
+  watchScope: "both",
+  customSelector: "",
+  focusInterval: 5,
   language: "auto",
   debugMode: false
-  // 默认关闭调试模式
 };
-var ReminderFocusPlugin = class extends import_obsidian.Plugin {
+var BringToFrontPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
     this.lastFocusTime = 0;
-    this.focusedModals = /* @__PURE__ */ new Set();
-    this.modalObserver = null;
-    this.detectionTimer = null;
+    this.observer = null;
+    this.restartTimer = null;
+    this.cachedKeywords = [];
   }
-  // Debug logging method
-  debug(message, ...args) {
-    if (this.settings?.debugMode) {
-      console.debug(`[Reminder Focus] ${message}`, ...args);
-    }
+  debug(msg) {
+    if (this.settings?.debugMode) console.log(`[Bring to Front] ${msg}`);
   }
   async onload() {
     await this.loadSettings();
     this.updateTranslations();
+    this.addSettingTab(new BringToFrontSettingTab(this.app, this));
+    this.setupDetection();
     this.debug("Plugin loaded");
-    this.addSettingTab(new ReminderFocusSettingTab(this.app, this));
-    this.setupModalDetection();
   }
   onunload() {
-    this.debug("Plugin unloaded");
     this.cleanup();
   }
   cleanup() {
-    if (this.modalObserver) {
-      this.modalObserver.disconnect();
-      this.modalObserver = null;
-    }
-    if (this.detectionTimer) {
-      window.clearInterval(this.detectionTimer);
-      this.detectionTimer = null;
-    }
-    this.focusedModals.clear();
-    this.lastFocusTime = 0;
+    this.observer?.disconnect();
+    this.observer = null;
+    if (this.restartTimer) window.clearTimeout(this.restartTimer);
+    this.restartTimer = null;
   }
-  setupModalDetection() {
-    this.modalObserver = new MutationObserver((mutations) => {
+  // --- Detection ---
+  getSelector() {
+    if (this.settings.watchScope === "custom") {
+      return this.settings.customSelector.trim() || SCOPE_SELECTORS.both;
+    }
+    return SCOPE_SELECTORS[this.settings.watchScope] || SCOPE_SELECTORS.both;
+  }
+  setupDetection() {
+    const selector = this.getSelector();
+    this.observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        if (mutation.addedNodes.length > 0) {
-          for (let i = 0; i < mutation.addedNodes.length; i++) {
-            const node = mutation.addedNodes[i];
-            if (node instanceof HTMLElement) {
-              if (node.classList.contains("modal-container") || node.querySelector(".modal-container")) {
-                this.checkForReminderModal(node);
-              }
-            }
+        for (let i = 0; i < mutation.addedNodes.length; i++) {
+          const node = mutation.addedNodes[i];
+          if (node instanceof HTMLElement) {
+            this.checkNode(node, selector);
           }
         }
       }
     });
-    this.modalObserver.observe(document.body, {
-      childList: true,
-      subtree: true
-      // 需要 subtree 因为 modal-container 可能不是直接子元素
-    });
-    this.detectionTimer = window.setInterval(() => {
-      this.checkAllModals();
-    }, this.settings.detectionInterval);
-    this.registerInterval(this.detectionTimer);
-    this.registerEvent(
-      this.app.workspace.on("window-open", () => {
-        setTimeout(() => {
-          this.checkAllModals();
-        }, 100);
-      })
-    );
-    this.checkAllModals();
+    this.observer.observe(document.body, { childList: true, subtree: true });
+    this.checkExisting(selector);
   }
-  checkForReminderModal(element) {
-    if (element.classList.contains("modal-container")) {
-      if (this.isObsidianReminderModal(element)) {
-        this.debug("Detected reminder modal (direct)");
-        this.handleReminderModal(element);
-      }
-    } else {
-      const modal = element.querySelector(".modal-container");
-      if (modal && this.isObsidianReminderModal(modal)) {
-        this.debug("Detected reminder modal (child)");
-        this.handleReminderModal(modal);
-      }
-    }
-  }
-  checkAllModals() {
-    const modals = document.querySelectorAll(".modal-container");
-    for (let i = 0; i < modals.length; i++) {
-      this.checkForReminderModal(modals[i]);
-    }
-  }
-  handleReminderModal(modalElement) {
-    const modalId = this.getModalId(modalElement);
-    if (this.focusedModals.has(modalId)) {
-      return;
-    }
-    this.focusedModals.add(modalId);
-    this.debug(`Processing modal: ${modalId}`);
-    const observer = new MutationObserver(() => {
-      if (!document.body.contains(modalElement)) {
-        this.debug(`Modal ${modalId} closed, removing from focused set`);
-        this.focusedModals.delete(modalId);
-        observer.disconnect();
-      }
-    });
-    observer.observe(modalElement.parentElement || document.body, {
-      childList: true,
-      subtree: true
-    });
-    void this.focusModal(modalElement, modalId);
-  }
-  getModalId(element) {
-    if (element.id) {
-      return element.id;
-    }
-    if (element.dataset.modalId) {
-      return element.dataset.modalId;
-    }
-    const textContent = element.textContent?.substring(0, 100) || "";
-    const className = element.className || "";
-    const tagStructure = this.getElementStructure(element);
-    const contentHash = this.simpleHash(textContent + className + tagStructure);
-    const modalId = `reminder-modal-${contentHash}`;
-    element.dataset.modalId = modalId;
-    return modalId;
-  }
-  getElementStructure(element) {
-    const tagName = element.tagName.toLowerCase();
-    const attributeInfo = Array.from(element.attributes).slice(0, 5).map((attr) => `${attr.name}="${attr.value.substring(0, 20)}"`).join(" ");
-    const childTags = Array.from(element.children).slice(0, 5).map((child) => child.tagName.toLowerCase()).join(",");
-    return `${tagName}[${attributeInfo}]>{${childTags}}`;
-  }
-  hasButtonWithText(element, text) {
-    const buttons = element.querySelectorAll("button");
-    for (let i = 0; i < buttons.length; i++) {
-      const button = buttons[i];
-      if (button.textContent?.includes(text)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  isObsidianReminderModal(element) {
-    const textContent = element.textContent || "";
-    const buttons = element.querySelectorAll("button");
-    if (buttons.length === 0) {
-      return false;
-    }
-    const hasSnoozeButton = this.hasButtonWithText(element, "Snooze");
-    const hasDoneButton = this.hasButtonWithText(element, "Done");
-    if (hasDoneButton && hasSnoozeButton) {
-      this.debug("Detected reminder modal: has both Done and Snooze buttons");
-      return true;
-    }
-    if (element.querySelector(".reminder-modal, .reminder-title, .reminder-actions, .reminder-file")) {
-      this.debug("Detected reminder modal: has reminder CSS classes");
-      return true;
-    }
-    const hasReminderStructure = element.querySelector("h3") !== null && // reminder-title 使用 h3
-    element.querySelector("select") !== null && // Snooze 下拉选择
-    element.querySelector("select option[selected][disabled][hidden]") !== null;
-    if (hasReminderStructure && (hasSnoozeButton || hasDoneButton)) {
-      this.debug("Detected reminder modal: has reminder structure and buttons");
-      return true;
-    }
-    if (element.querySelector('button[aria-label*="reminder"]') || element.querySelector('[aria-label*="Remind me later"]') || element.querySelector('[aria-label*="Mark as Done"]') || element.querySelector('button[aria-label*="Done"]')) {
-      this.debug("Detected reminder modal: has reminder aria-labels");
-      return true;
-    }
-    const hasSpecificButtonCombination = (hasSnoozeButton || textContent.includes("Snooze")) && (hasDoneButton || textContent.includes("Done")) && (textContent.includes("minutes") || textContent.includes("hours") || textContent.includes("Tomorrow") || textContent.includes("Next week"));
-    if (hasSpecificButtonCombination) {
-      this.debug("Detected reminder modal: has specific button combination and time options");
-      return true;
-    }
-    if (element.querySelector(".mod-cta") && element.querySelector("select.dropdown") && (hasSnoozeButton || hasDoneButton)) {
-      this.debug("Detected reminder modal: has NotificationModal features");
-      return true;
-    }
-    if (element.querySelector(".reminder-file") || element.querySelector('button[aria-label*=".md"]') || textContent.includes(".md") && (hasSnoozeButton || hasDoneButton)) {
-      this.debug("Detected reminder modal: has file link");
-      return true;
-    }
-    if ((element.querySelector("[data-svelte]") || element.classList.toString().includes("svelte")) && (hasSnoozeButton || hasDoneButton)) {
-      this.debug("Detected reminder modal: has Svelte features");
-      return true;
-    }
-    if ((textContent.includes("reminder") || textContent.includes("\u63D0\u9192")) && (hasSnoozeButton || hasDoneButton) && textContent.length < 2e3) {
-      this.debug("Detected reminder modal: has basic reminder indicators");
-      return true;
-    }
-    return false;
-  }
-  simpleHash(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash).toString(36);
-  }
-  async focusModal(modalElement, modalId) {
-    const now = Date.now();
-    const timeSinceLastFocus = (now - this.lastFocusTime) / 1e3;
-    if (timeSinceLastFocus < this.settings.focusInterval) {
-      this.debug(this.t("focusCooldown") + ` (Modal: ${modalId})`);
-      return;
-    }
-    this.lastFocusTime = now;
+  checkNode(node, selector) {
     try {
-      await this.ensureWindowVisible();
-      await this.delay(150);
-      this.focusModalElement(modalElement);
-      this.debug(this.t("reminderDetected") + ` (Modal: ${modalId})`);
-    } catch (error) {
-      console.error("Failed to focus modal:", error, `(Modal: ${modalId})`);
+      let target = null;
+      if (node.matches(selector)) {
+        target = node;
+      } else {
+        target = node.querySelector(selector);
+      }
+      if (target && this.matchesKeywords(target)) {
+        this.handleMatch();
+      }
+    } catch {
     }
   }
-  delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  checkExisting(selector) {
+    if (this.isWindowFocused()) return;
+    try {
+      const el = document.querySelector(selector);
+      if (el && this.matchesKeywords(el)) {
+        this.handleMatch();
+      }
+    } catch {
+    }
   }
-  async ensureWindowVisible() {
-    return new Promise((resolve) => {
+  updateKeywordCache() {
+    this.cachedKeywords = this.settings.keywords.split(",").map((k) => k.trim().toLowerCase()).filter((k) => k.length > 0);
+  }
+  matchesKeywords(el) {
+    if (this.cachedKeywords.length === 0) return true;
+    const text = (el.textContent || "").toLowerCase();
+    return this.cachedKeywords.some((kw) => text.includes(kw));
+  }
+  // --- Focus ---
+  handleMatch() {
+    if (this.isWindowFocused()) {
+      this.debug(this.t("windowFocused"));
+      return;
+    }
+    if (this.settings.focusInterval > 0) {
+      const now = Date.now();
+      if ((now - this.lastFocusTime) / 1e3 < this.settings.focusInterval) {
+        this.debug(this.t("cooldownActive"));
+        return;
+      }
+      this.lastFocusTime = now;
+    }
+    this.debug(this.t("matchDetected"));
+    void this.bringToFront();
+  }
+  isWindowFocused() {
+    const win = this.getElectronWindow();
+    if (win) return win.isFocused();
+    return document.hasFocus();
+  }
+  async bringToFront() {
+    try {
       window.focus();
-      this.tryElectronFocus().then(() => resolve()).catch((err) => {
-        this.debug("Electron focus failed, falling back to standard focus", err);
-        resolve();
-      });
-    });
-  }
-  async tryElectronFocus() {
-    const electronWindow = window;
-    if (!electronWindow.require) {
-      return;
+      const win = this.getElectronWindow();
+      if (!win) return;
+      if (win.isMinimized()) win.restore();
+      if (!win.isVisible()) win.show();
+      if (!win.isAlwaysOnTop()) {
+        win.setAlwaysOnTop(true);
+        await new Promise((r) => setTimeout(r, 200));
+        win.setAlwaysOnTop(false);
+      }
+      win.focus();
+    } catch (e) {
+      console.error("[Bring to Front]", e);
     }
+  }
+  getElectronWindow() {
     try {
-      const electron = electronWindow.require("electron");
-      const remote = electron?.remote;
-      if (!remote) {
-        this.debug("Electron remote not available");
-        return;
-      }
-      const currentWindow = remote.getCurrentWindow();
-      if (!currentWindow) {
-        return;
-      }
-      let needsActivation = false;
-      if (currentWindow.isMinimized()) {
-        currentWindow.restore();
-        this.debug("Window restored from minimized state");
-        needsActivation = true;
-      }
-      if (!currentWindow.isVisible()) {
-        currentWindow.show();
-        this.debug("Window made visible");
-        needsActivation = true;
-      }
-      if (!currentWindow.isFocused()) {
-        this.debug("Window is not focused, bringing to front");
-        needsActivation = true;
-      }
-      if (needsActivation) {
-        if (!currentWindow.isAlwaysOnTop()) {
-          currentWindow.setAlwaysOnTop(true);
-          await this.delay(200);
-          currentWindow.setAlwaysOnTop(false);
-          currentWindow.focus();
-        } else {
-          currentWindow.focus();
-          await this.delay(100);
+      const electronWindow = window;
+      if (electronWindow.require) {
+        try {
+          const remote = electronWindow.require("@electron/remote");
+          if (remote) return remote.getCurrentWindow();
+        } catch {
         }
+        const electron = electronWindow.require("electron");
+        return electron?.remote?.getCurrentWindow() ?? null;
       }
-    } catch (error) {
-      this.debug("Error in tryElectronFocus:", error);
+    } catch {
     }
+    return null;
   }
-  focusModalElement(modalElement) {
-    if (!modalElement.hasAttribute("tabindex")) {
-      modalElement.setAttribute("tabindex", "-1");
-    }
-    void this.focusWithRetry(modalElement, 3);
-    this.debug("Focusing modal container");
-    modalElement.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-  async focusWithRetry(element, maxRetries) {
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        element.focus();
-        if (document.activeElement === element) {
-          this.debug(`Focus successful on attempt ${i + 1}`);
-          return;
-        }
-        if (i < maxRetries - 1) {
-          await this.delay(50);
-        }
-      } catch (error) {
-        this.debug(`Focus attempt ${i + 1} error:`, error);
-        if (i < maxRetries - 1) {
-          await this.delay(50);
-        }
-      }
-    }
-    this.debug(`Failed to focus element after ${maxRetries} attempts`);
-  }
+  // --- i18n ---
   updateTranslations() {
     const lang = this.getLanguage();
-    this.t = (key) => {
-      return translations[lang][key] || translations["en"][key] || key;
-    };
+    this.t = (key) => translations[lang][key] || translations["en"][key] || key;
   }
   getLanguage() {
     if (this.settings.language === "zh") return "zh";
@@ -392,82 +255,90 @@ var ReminderFocusPlugin = class extends import_obsidian.Plugin {
     const obsidianApp = this.app;
     const obsidianLang = obsidianApp.vault?.config?.language;
     const systemLang = navigator.language.toLowerCase();
-    if (obsidianLang?.includes("zh") || systemLang.includes("zh")) {
-      return "zh";
-    }
-    return "en";
+    return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
   }
+  // --- Settings ---
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.updateKeywordCache();
   }
   async saveSettings() {
     await this.saveData(this.settings);
     this.updateTranslations();
+    this.updateKeywordCache();
   }
   restartDetection() {
-    if (this.modalObserver) {
-      this.modalObserver.disconnect();
-      this.modalObserver = null;
-    }
-    if (this.detectionTimer) {
-      window.clearInterval(this.detectionTimer);
-      this.detectionTimer = null;
-    }
-    this.setupModalDetection();
+    if (this.restartTimer) window.clearTimeout(this.restartTimer);
+    this.restartTimer = window.setTimeout(() => {
+      this.restartTimer = null;
+      this.cleanup();
+      this.setupDetection();
+    }, 300);
   }
 };
-var ReminderFocusSettingTab = class extends import_obsidian.PluginSettingTab {
+var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
   display() {
-    let { containerEl } = this;
+    const { containerEl } = this;
+    const t = this.plugin.t.bind(this.plugin);
     containerEl.empty();
-    new import_obsidian.Setting(containerEl).setName(this.plugin.t("language")).setDesc(this.plugin.t("languageDesc")).addDropdown(
-      (dropdown) => dropdown.addOption("auto", this.plugin.t("auto")).addOption("zh", this.plugin.t("chinese")).addOption("en", this.plugin.t("english")).setValue(this.plugin.settings.language).onChange(async (value) => {
-        this.plugin.settings.language = value;
+    new import_obsidian.Setting(containerEl).setName(t("language")).setDesc(t("languageDesc")).addDropdown((dd) => dd.addOption("auto", t("auto")).addOption("zh", t("chinese")).addOption("en", t("english")).setValue(this.plugin.settings.language).onChange(async (v) => {
+      this.plugin.settings.language = v;
+      await this.plugin.saveSettings();
+      this.display();
+    }));
+    new import_obsidian.Setting(containerEl).setName(t("keywords")).setDesc(t("keywordsDesc")).addTextArea((ta) => {
+      ta.setPlaceholder("Snooze, Done").setValue(this.plugin.settings.keywords).onChange(async (v) => {
+        this.plugin.settings.keywords = v;
         await this.plugin.saveSettings();
-        this.display();
-        new import_obsidian.Notice(this.plugin.t("settingsSaved"));
-      })
-    );
-    new import_obsidian.Setting(containerEl).setName(this.plugin.t("focusInterval")).setDesc(this.plugin.t("focusIntervalDesc")).addText((text) => {
-      text.setPlaceholder("10").setValue(String(this.plugin.settings.focusInterval)).onChange(async (value) => {
-        const num = parseInt(value);
-        if (!isNaN(num) && num >= 1) {
-          this.plugin.settings.focusInterval = num;
+        this.plugin.restartDetection();
+      });
+      ta.inputEl.rows = 2;
+      ta.inputEl.style.width = "100%";
+    });
+    new import_obsidian.Setting(containerEl).setName(t("watchScope")).setDesc(t("watchScopeDesc")).addDropdown((dd) => dd.addOption("modal", t("scopeModal")).addOption("notice", t("scopeNotice")).addOption("both", t("scopeBoth")).addOption("custom", t("scopeCustom")).setValue(this.plugin.settings.watchScope).onChange(async (v) => {
+      this.plugin.settings.watchScope = v;
+      await this.plugin.saveSettings();
+      this.plugin.restartDetection();
+      this.display();
+    }));
+    if (this.plugin.settings.watchScope === "custom") {
+      new import_obsidian.Setting(containerEl).setName(t("customSelector")).setDesc(t("customSelectorDesc")).addText((tx) => tx.setPlaceholder(".modal-container, .notice").setValue(this.plugin.settings.customSelector).onChange(async (v) => {
+        this.plugin.settings.customSelector = v;
+        await this.plugin.saveSettings();
+        this.plugin.restartDetection();
+      }));
+    }
+    new import_obsidian.Setting(containerEl).setName(t("focusInterval")).setDesc(t("focusIntervalDesc")).addText((tx) => {
+      tx.setPlaceholder("5").setValue(String(this.plugin.settings.focusInterval)).onChange(async (v) => {
+        const n = parseInt(v);
+        if (!isNaN(n) && n >= 0) {
+          this.plugin.settings.focusInterval = n;
           await this.plugin.saveSettings();
-        } else {
-          new import_obsidian.Notice(this.plugin.t("invalidInterval"));
         }
       });
-      const input = text.inputEl;
-      input.type = "number";
-      input.min = "1";
-      input.step = "1";
+      tx.inputEl.type = "number";
+      tx.inputEl.min = "0";
+      tx.inputEl.step = "1";
     });
-    new import_obsidian.Setting(containerEl).setName(this.plugin.t("detectionInterval")).setDesc(this.plugin.t("detectionIntervalDesc")).addText((text) => {
-      text.setPlaceholder("5000").setValue(String(this.plugin.settings.detectionInterval)).onChange(async (value) => {
-        const num = parseInt(value);
-        if (!isNaN(num) && num >= 100) {
-          this.plugin.settings.detectionInterval = num;
-          await this.plugin.saveSettings();
-          this.plugin.restartDetection();
-        } else {
-          new import_obsidian.Notice(this.plugin.t("invalidDetectionInterval"));
-        }
-      });
-      const input = text.inputEl;
-      input.type = "number";
-      input.min = "100";
-      input.step = "100";
-    });
-    new import_obsidian.Setting(containerEl).setName(this.plugin.t("debugMode")).setDesc(this.plugin.t("debugModeDesc")).addToggle(
-      (toggle) => toggle.setValue(this.plugin.settings.debugMode).onChange(async (value) => {
-        this.plugin.settings.debugMode = value;
-        await this.plugin.saveSettings();
-      })
-    );
+    new import_obsidian.Setting(containerEl).setName(t("debugMode")).setDesc(t("debugModeDesc")).addToggle((tg) => tg.setValue(this.plugin.settings.debugMode).onChange(async (v) => {
+      this.plugin.settings.debugMode = v;
+      await this.plugin.saveSettings();
+    }));
+    const guide = containerEl.createEl("details");
+    guide.style.cssText = "margin-top:16px;padding:8px 12px;border:1px solid var(--background-modifier-border);border-radius:8px";
+    guide.createEl("summary", { text: t("guide"), attr: { style: "cursor:pointer;font-weight:600;color:var(--text-accent)" } });
+    const gc = guide.createDiv({ attr: { style: "margin-top:8px;font-size:0.9em;line-height:1.6" } });
+    gc.createEl("p", { text: t("guideKeywords") });
+    gc.createEl("p", { text: t("guideScope") });
+    gc.createEl("h4", { text: t("guideExamples") });
+    const ul = gc.createEl("ul", { attr: { style: "padding-left:20px" } });
+    ul.createEl("li", { text: t("guideEx1") });
+    ul.createEl("li", { text: t("guideEx2") });
+    ul.createEl("li", { text: t("guideEx3") });
+    gc.createEl("p", { text: t("guideTip"), attr: { style: "margin-top:8px;padding:6px 10px;background:var(--background-secondary);border-radius:4px;font-size:0.85em" } });
   }
 };

@@ -30,7 +30,7 @@ function updateManifestAndVersions(targetVersion) {
 try {
   // Update package.json version without creating git tag
   console.log(`Bumping ${versionType} version...`);
-  execSync(`yarn version --${versionType} --no-git-tag-version`, { stdio: "inherit" });
+  execSync(`npm version ${versionType} --no-git-tag-version`, { stdio: "inherit" });
 
   // Get the new version
   const packageJson = JSON.parse(readFileSync("package.json", "utf8"));

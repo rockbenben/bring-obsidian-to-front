@@ -1,9 +1,9 @@
 {
-  "id": "bring-reminders-front",
-  "name": "Bring Reminders to Front",
-  "version": "1.0.6",
+  "id": "bring-obsidian-to-front",
+  "name": "Bring Obsidian to Front",
+  "version": "2.0.0",
   "minAppVersion": "0.15.0",
-  "description": "When a reminder pops up, instantly brings the window to front so you never miss it / 出现提醒即置前聚焦.",
+  "description": "When Obsidian is in the background, automatically brings the window to front on new modals or notices.",
   "author": "rockbenben",
   "authorUrl": "https://github.com/rockbenben",
   "isDesktopOnly": true

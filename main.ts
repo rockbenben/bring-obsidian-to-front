@@ -1,6 +1,6 @@
-import { App, Plugin, PluginSettingTab, Setting, Notice } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
 
-// 定义 Electron 相关的接口
+// Electron interfaces
 interface ElectronWindow extends Window {
   require?: <T = unknown>(module: string) => T;
 }
@@ -21,686 +21,363 @@ interface ElectronBrowserWindow {
 }
 
 interface ObsidianApp extends App {
-  vault: {
-    config?: {
-      language?: string;
-    };
-  } & App["vault"];
+  vault: { config?: { language?: string } } & App["vault"];
 }
 
-// 定义翻译键类型
-type TranslationKey =
-  | "focusInterval"
-  | "focusIntervalDesc"
-  | "detectionInterval"
-  | "detectionIntervalDesc"
-  | "language"
-  | "languageDesc"
-  | "debugMode"
-  | "debugModeDesc"
-  | "auto"
-  | "chinese"
-  | "english"
-  | "reminderDetected"
-  | "focusSkipped"
-  | "focusCooldown"
-  | "settingsSaved"
-  | "invalidInterval"
-  | "invalidDetectionInterval";
+// --- i18n ---
 
-// 定义翻译记录类型
+type TranslationKey =
+  | "language" | "languageDesc" | "auto" | "chinese" | "english"
+  | "keywords" | "keywordsDesc"
+  | "watchScope" | "watchScopeDesc"
+  | "scopeModal" | "scopeNotice" | "scopeBoth" | "scopeCustom"
+  | "customSelector" | "customSelectorDesc"
+  | "focusInterval" | "focusIntervalDesc"
+  | "debugMode" | "debugModeDesc"
+  | "matchDetected" | "windowFocused" | "cooldownActive"
+  | "guide" | "guideKeywords" | "guideScope" | "guideExamples"
+  | "guideEx1" | "guideEx2" | "guideEx3" | "guideTip";
+
 type TranslationRecord = Record<TranslationKey, string>;
 
-// 定义翻译对象类型
-type Translations = {
-  en: TranslationRecord;
-  zh: TranslationRecord;
-};
-
-// 多语言支持
-const translations: Translations = {
+const translations: { en: TranslationRecord; zh: TranslationRecord } = {
   en: {
-    focusInterval: "Minimum focus interval (seconds)",
-    focusIntervalDesc: "Minimum time between two consecutive window focus actions",
-    detectionInterval: "Detection interval (milliseconds)",
-    detectionIntervalDesc: "How often to check for reminder modals (lower values = more responsive, higher CPU usage)",
-    language: "Language",
-    languageDesc: "Select display language for this plugin",
-    debugMode: "Debug mode",
-    debugModeDesc: "Enable detailed logging for troubleshooting (for developers)",
-    auto: "Auto",
-    chinese: "中文",
-    english: "English",
-    reminderDetected: "Reminder detected, focusing window",
-    focusSkipped: "Window already active, skipping focus",
-    focusCooldown: "Focus on cooldown, skipping",
-    settingsSaved: "Settings saved successfully",
-    invalidInterval: "Please enter a valid number for focus interval (1 second or higher)",
-    invalidDetectionInterval: "Please enter a valid number for detection interval (100ms or higher)",
+    language: "Language", languageDesc: "Display language", auto: "Auto", chinese: "中文", english: "English",
+    keywords: "Keywords (optional)",
+    keywordsDesc: "Leave empty to bring to front on any modal/notice when Obsidian is in the background. Add comma-separated keywords to trigger when any one of them appears.",
+    watchScope: "Watch scope", watchScopeDesc: "Which elements to monitor",
+    scopeModal: "Modals", scopeNotice: "Notices", scopeBoth: "Modals & Notices", scopeCustom: "Custom selector",
+    customSelector: "CSS Selector", customSelectorDesc: "Custom CSS selector (e.g. .modal-container, [data-type=\"my-plugin\"])",
+    focusInterval: "Focus cooldown (seconds)", focusIntervalDesc: "Minimum time between focus actions. Prevents repeated focus stealing. 0 = no cooldown",
+    debugMode: "Debug mode", debugModeDesc: "Log matching details to console (Ctrl+Shift+I)",
+    matchDetected: "Match detected, bringing to front",
+    windowFocused: "Window already focused, skipping",
+    cooldownActive: "Cooldown active, skipping",
+    guide: "Quick Start Guide",
+    guideKeywords: "By default (no keywords), Obsidian is brought to front whenever a modal or notice appears while it is in the background. Add comma-separated keywords to only trigger when any keyword appears in the element text.",
+    guideScope: "Watch scope: \"Modals\" watches popup dialogs, \"Notices\" watches toast messages, \"Both\" watches everything. Use \"Custom\" for advanced CSS selectors.",
+    guideExamples: "Examples",
+    guideEx1: "Reminder popup → keywords \"Snooze, Done\", scope \"Modals\"",
+    guideEx2: "Error alerts → keywords \"error, failed\", scope \"Notices\"",
+    guideEx3: "All modals & notices → leave keywords empty, scope \"Both\" (default)",
+    guideTip: "Tip: To find a CSS selector — open DevTools (Ctrl+Shift+I), click the inspect icon (top-left of DevTools panel), click the target element, then use the class names shown in the Elements panel (e.g. .my-plugin-modal).",
   },
   zh: {
-    focusInterval: "最小聚焦间隔（秒）",
-    focusIntervalDesc: "两次窗口置顶之间的最小时间间隔",
-    detectionInterval: "检测间隔（毫秒）",
-    detectionIntervalDesc: "检测提醒弹窗的频率（数值越小响应越快，但CPU占用越高）",
-    language: "语言",
-    languageDesc: "选择插件的显示语言",
-    debugMode: "调试模式",
-    debugModeDesc: "启用详细日志记录用于故障排除（供开发者使用）",
-    auto: "自动",
-    chinese: "中文",
-    english: "English",
-    reminderDetected: "检测到提醒，正在置顶窗口",
-    focusSkipped: "窗口已处于活动状态，跳过置顶",
-    focusCooldown: "聚焦冷却中，跳过置顶",
-    settingsSaved: "设置已成功保存",
-    invalidInterval: "请输入有效的聚焦间隔数字（1秒或更高）",
-    invalidDetectionInterval: "请输入有效的检测间隔数字（100毫秒或更高）",
+    language: "语言", languageDesc: "显示语言", auto: "自动", chinese: "中文", english: "English",
+    keywords: "关键词（可选）",
+    keywordsDesc: "留空即可：后台出现弹窗或通知时自动置顶。填写逗号分隔的关键词，出现任一即触发。",
+    watchScope: "监听范围", watchScopeDesc: "监听哪类元素",
+    scopeModal: "弹窗", scopeNotice: "通知", scopeBoth: "弹窗和通知", scopeCustom: "自定义选择器",
+    customSelector: "CSS 选择器", customSelectorDesc: "自定义 CSS 选择器（如 .modal-container、[data-type=\"my-plugin\"]）",
+    focusInterval: "聚焦冷却（秒）", focusIntervalDesc: "两次置顶之间的最小间隔，防止反复抢焦。0 = 不限制",
+    debugMode: "调试模式", debugModeDesc: "在控制台（Ctrl+Shift+I）输出匹配日志",
+    matchDetected: "检测到匹配，正在置顶",
+    windowFocused: "窗口已在前台，跳过",
+    cooldownActive: "冷却中，跳过",
+    guide: "入门指南",
+    guideKeywords: "默认无需配置：后台出现弹窗或通知时自动置顶。如需过滤，填入逗号分隔的关键词，出现任一关键词即触发。",
+    guideScope: "监听范围：「弹窗」监听对话框弹窗，「通知」监听右上角提示消息，「弹窗和通知」同时监听两者。需要更灵活的匹配请选「自定义」输入 CSS 选择器。",
+    guideExamples: "配置示例",
+    guideEx1: "提醒弹窗 → 关键词 \"Snooze, Done\"，范围「弹窗」",
+    guideEx2: "错误提示 → 关键词 \"error, failed\"，范围「通知」",
+    guideEx3: "所有弹窗和通知 → 关键词留空，范围「弹窗和通知」（默认）",
+    guideTip: "提示：查找 CSS 选择器——打开开发者工具（Ctrl+Shift+I），点击左上角的选择器图标，点击目标元素，在 Elements 面板中查看 class 名称（如 .my-plugin-modal）。",
   },
 };
 
-interface ReminderFocusSettings {
+// --- Settings ---
+
+interface BringToFrontSettings {
+  keywords: string;
+  watchScope: "modal" | "notice" | "both" | "custom";
+  customSelector: string;
   focusInterval: number;
-  detectionInterval: number; // 检测间隔（毫秒）
   language: "auto" | "zh" | "en";
-  debugMode: boolean; // 调试模式
+  debugMode: boolean;
 }
 
-const DEFAULT_SETTINGS: ReminderFocusSettings = {
-  focusInterval: 10,
-  detectionInterval: 5000, // 默认每5秒检测一次
-  language: "auto",
-  debugMode: false, // 默认关闭调试模式
+const SCOPE_SELECTORS: Record<string, string> = {
+  modal: ".modal-container",
+  notice: ".notice",
+  both: ".modal-container, .notice",
 };
 
-export default class ReminderFocusPlugin extends Plugin {
-  settings!: ReminderFocusSettings;
-  private lastFocusTime: number = 0;
-  private focusedModals: Set<string> = new Set();
-  private modalObserver: MutationObserver | null = null;
-  private detectionTimer: number | null = null;
+const DEFAULT_SETTINGS: BringToFrontSettings = {
+  keywords: "",
+  watchScope: "both",
+  customSelector: "",
+  focusInterval: 5,
+  language: "auto",
+  debugMode: false,
+};
+
+// --- Plugin ---
+
+export default class BringToFrontPlugin extends Plugin {
+  settings!: BringToFrontSettings;
+  private lastFocusTime = 0;
+  private observer: MutationObserver | null = null;
+  private restartTimer: number | null = null;
+  private cachedKeywords: string[] = [];
   public t!: (key: TranslationKey) => string;
 
-  // Debug logging method
-  private debug(message: string, ...args: unknown[]) {
-    if (this.settings?.debugMode) {
-      console.debug(`[Reminder Focus] ${message}`, ...args);
-    }
+  private debug(msg: string) {
+    if (this.settings?.debugMode) console.log(`[Bring to Front] ${msg}`);
   }
 
   async onload() {
     await this.loadSettings();
     this.updateTranslations();
-
+    this.addSettingTab(new BringToFrontSettingTab(this.app, this));
+    this.setupDetection();
     this.debug("Plugin loaded");
-
-    // 添加设置标签页
-    this.addSettingTab(new ReminderFocusSettingTab(this.app, this));
-
-    // 开始监听弹窗
-    this.setupModalDetection();
   }
 
   onunload() {
-    this.debug("Plugin unloaded");
     this.cleanup();
   }
 
   private cleanup() {
-    // 清理观察器
-    if (this.modalObserver) {
-      this.modalObserver.disconnect();
-      this.modalObserver = null;
-    }
-
-    // 清理定时器
-    if (this.detectionTimer) {
-      window.clearInterval(this.detectionTimer);
-      this.detectionTimer = null;
-    }
-
-    // 清空记录
-    this.focusedModals.clear();
-    this.lastFocusTime = 0;
+    this.observer?.disconnect();
+    this.observer = null;
+    if (this.restartTimer) window.clearTimeout(this.restartTimer);
+    this.restartTimer = null;
   }
 
-  private setupModalDetection() {
-    // 监听 DOM 变化以检测新的弹窗
-    this.modalObserver = new MutationObserver((mutations) => {
+  // --- Detection ---
+
+  private getSelector(): string {
+    if (this.settings.watchScope === "custom") {
+      return this.settings.customSelector.trim() || SCOPE_SELECTORS.both;
+    }
+    return SCOPE_SELECTORS[this.settings.watchScope] || SCOPE_SELECTORS.both;
+  }
+
+  private setupDetection() {
+    const selector = this.getSelector();
+
+    this.observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
-        if (mutation.addedNodes.length > 0) {
-          for (let i = 0; i < mutation.addedNodes.length; i++) {
-            const node = mutation.addedNodes[i];
-            if (node instanceof HTMLElement) {
-              // 快速过滤：只检查可能是弹窗的元素
-              if (node.classList.contains("modal-container") || node.querySelector(".modal-container")) {
-                this.checkForReminderModal(node);
-              }
-            }
+        for (let i = 0; i < mutation.addedNodes.length; i++) {
+          const node = mutation.addedNodes[i];
+          if (node instanceof HTMLElement) {
+            this.checkNode(node, selector);
           }
         }
       }
     });
+    this.observer.observe(document.body, { childList: true, subtree: true });
 
-    // 开始观察 body 元素
-    this.modalObserver.observe(document.body, {
-      childList: true,
-      subtree: true, // 需要 subtree 因为 modal-container 可能不是直接子元素
-    });
-
-    // 定时检测机制
-    this.detectionTimer = window.setInterval(() => {
-      this.checkAllModals();
-    }, this.settings.detectionInterval);
-    // 确保卸载时自动清理
-    this.registerInterval(this.detectionTimer);
-
-    // 同时监听 Obsidian 的 Modal 打开事件
-    this.registerEvent(
-      this.app.workspace.on("window-open", () => {
-        setTimeout(() => {
-          this.checkAllModals();
-        }, 100);
-      })
-    );
-
-    // 初始立即检查一次，避免首次漏检
-    this.checkAllModals();
+    this.checkExisting(selector);
   }
 
-  private checkForReminderModal(element: HTMLElement) {
-    // 如果元素本身是 modal-container，直接检查
-    if (element.classList.contains("modal-container")) {
-      if (this.isObsidianReminderModal(element)) {
-        this.debug("Detected reminder modal (direct)");
-        this.handleReminderModal(element);
-      }
-    } else {
-      // 否则检查其子元素
-      const modal = element.querySelector<HTMLElement>(".modal-container");
-      if (modal && this.isObsidianReminderModal(modal)) {
-        this.debug("Detected reminder modal (child)");
-        this.handleReminderModal(modal);
-      }
-    }
-  }
-
-  private checkAllModals() {
-    // 检查所有当前存在的弹窗
-    const modals = document.querySelectorAll<HTMLElement>(".modal-container");
-    for (let i = 0; i < modals.length; i++) {
-      this.checkForReminderModal(modals[i]);
-    }
-  }
-
-  private handleReminderModal(modalElement: HTMLElement) {
-    // 检查是否已经处理过这个弹窗
-    const modalId = this.getModalId(modalElement);
-    if (this.focusedModals.has(modalId)) {
-      // this.debug(`Modal ${modalId} already focused, skipping`); // 减少日志噪音
-      return;
-    }
-
-    // 标记为已处理
-    this.focusedModals.add(modalId);
-    this.debug(`Processing modal: ${modalId}`);
-
-    // 监听弹窗关闭，清理标记
-    const observer = new MutationObserver(() => {
-      if (!document.body.contains(modalElement)) {
-        this.debug(`Modal ${modalId} closed, removing from focused set`);
-        this.focusedModals.delete(modalId);
-        observer.disconnect();
-      }
-    });
-
-    observer.observe(modalElement.parentElement || document.body, {
-      childList: true,
-      subtree: true,
-    });
-
-    // 聚焦提醒弹窗（而不是整个窗口）
-    void this.focusModal(modalElement, modalId);
-  }
-
-  private getModalId(element: HTMLElement): string {
-    // 优先使用现有的ID
-    if (element.id) {
-      return element.id;
-    }
-
-    // 检查是否有数据属性
-    if (element.dataset.modalId) {
-      return element.dataset.modalId;
-    }
-
-    // 基于元素内容和结构生成稳定的ID
-    const textContent = element.textContent?.substring(0, 100) || "";
-    const className = element.className || "";
-    // 使用标签名和属性而不是innerHTML来生成ID
-    const tagStructure = this.getElementStructure(element);
-
-    // 生成基于内容的哈希ID（简化版）
-    const contentHash = this.simpleHash(textContent + className + tagStructure);
-    const modalId = `reminder-modal-${contentHash}`;
-
-    // 将ID存储到元素上，便于后续识别
-    element.dataset.modalId = modalId;
-
-    return modalId;
-  }
-
-  private getElementStructure(element: HTMLElement): string {
-    // 安全地获取元素结构信息，不使用innerHTML
-    const tagName = element.tagName.toLowerCase();
-    const attributeInfo = Array.from(element.attributes)
-      .slice(0, 5) // 限制属性数量以避免过长
-      .map((attr) => `${attr.name}="${attr.value.substring(0, 20)}"`)
-      .join(" ");
-
-    // 获取子元素信息而不是完整HTML
-    const childTags = Array.from(element.children)
-      .slice(0, 5) // 限制子元素数量
-      .map((child) => child.tagName.toLowerCase())
-      .join(",");
-
-    return `${tagName}[${attributeInfo}]>{${childTags}}`;
-  }
-
-  private hasButtonWithText(element: HTMLElement, text: string): boolean {
-    // 安全地检查按钮中是否包含特定文本
-    const buttons = element.querySelectorAll<HTMLButtonElement>("button");
-    for (let i = 0; i < buttons.length; i++) {
-      const button = buttons[i];
-      if (button.textContent?.includes(text)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private isObsidianReminderModal(element: HTMLElement): boolean {
-    // 优化：提取文本内容一次
-    const textContent = element.textContent || "";
-    
-    // 快速检查：如果没有任何按钮，很可能不是 reminder 弹窗
-    const buttons = element.querySelectorAll("button");
-    if (buttons.length === 0) {
-      return false;
-    }
-
-    const hasSnoozeButton = this.hasButtonWithText(element, "Snooze");
-    const hasDoneButton = this.hasButtonWithText(element, "Done");
-
-    // 1. 检查是否包含 "Done" 和 "Snooze" 按钮（reminder 插件的核心特征）
-    if (hasDoneButton && hasSnoozeButton) {
-      this.debug("Detected reminder modal: has both Done and Snooze buttons");
-      return true;
-    }
-
-    // 2. 检查是否有 reminder 相关的 CSS 类
-    // 优化：使用 querySelector 检查特定类名
-    if (element.querySelector(".reminder-modal, .reminder-title, .reminder-actions, .reminder-file")) {
-      this.debug("Detected reminder modal: has reminder CSS classes");
-      return true;
-    }
-
-    // 3. 检查 modal 内容结构（基于 Reminder.svelte 的结构）
-    const hasReminderStructure =
-      element.querySelector("h3") !== null && // reminder-title 使用 h3
-      element.querySelector("select") !== null && // Snooze 下拉选择
-      element.querySelector("select option[selected][disabled][hidden]") !== null; // Snooze placeholder
-
-    if (hasReminderStructure && (hasSnoozeButton || hasDoneButton)) {
-      this.debug("Detected reminder modal: has reminder structure and buttons");
-      return true;
-    }
-
-    // 4. 检查 aria-label 属性
-    if (
-      element.querySelector('button[aria-label*="reminder"]') ||
-      element.querySelector('[aria-label*="Remind me later"]') ||
-      element.querySelector('[aria-label*="Mark as Done"]') ||
-      element.querySelector('button[aria-label*="Done"]')
-    ) {
-      this.debug("Detected reminder modal: has reminder aria-labels");
-      return true;
-    }
-
-    // 5. 检查特定的按钮组合和文本模式
-    const hasSpecificButtonCombination =
-      (hasSnoozeButton || textContent.includes("Snooze")) &&
-      (hasDoneButton || textContent.includes("Done")) &&
-      (textContent.includes("minutes") || textContent.includes("hours") || textContent.includes("Tomorrow") || textContent.includes("Next week"));
-
-    if (hasSpecificButtonCombination) {
-      this.debug("Detected reminder modal: has specific button combination and time options");
-      return true;
-    }
-
-    // 6. 检查 NotificationModal 的特征
-    if (element.querySelector(".mod-cta") && element.querySelector("select.dropdown") && (hasSnoozeButton || hasDoneButton)) {
-      this.debug("Detected reminder modal: has NotificationModal features");
-      return true;
-    }
-
-    // 7. 检查文件链接特征
-    if (
-      (element.querySelector(".reminder-file") || 
-       element.querySelector('button[aria-label*=".md"]') || 
-       (textContent.includes(".md") && (hasSnoozeButton || hasDoneButton)))
-    ) {
-      this.debug("Detected reminder modal: has file link");
-      return true;
-    }
-
-    // 8. 检查 Svelte 组件特征
-    if ((element.querySelector("[data-svelte]") || element.classList.toString().includes("svelte")) && (hasSnoozeButton || hasDoneButton)) {
-      this.debug("Detected reminder modal: has Svelte features");
-      return true;
-    }
-
-    // 9. 回退检查：基本的 reminder 文本匹配
-    if ((textContent.includes("reminder") || textContent.includes("提醒")) && (hasSnoozeButton || hasDoneButton) && textContent.length < 2000) {
-      this.debug("Detected reminder modal: has basic reminder indicators");
-      return true;
-    }
-
-    return false;
-  }
-
-  private simpleHash(str: string): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = (hash << 5) - hash + char;
-      hash = hash & hash; // 转换为32位整数
-    }
-    return Math.abs(hash).toString(36);
-  }
-
-  private async focusModal(modalElement: HTMLElement, modalId: string) {
-    // 检查冷却时间
-    const now = Date.now();
-    const timeSinceLastFocus = (now - this.lastFocusTime) / 1000;
-    if (timeSinceLastFocus < this.settings.focusInterval) {
-      this.debug(this.t("focusCooldown") + ` (Modal: ${modalId})`);
-      return;
-    }
-
-    // 更新最后聚焦时间
-    this.lastFocusTime = now;
-
+  private checkNode(node: HTMLElement, selector: string) {
     try {
-      // 第一步：确保 Obsidian 窗口可见并等待完成
-      await this.ensureWindowVisible();
+      let target: HTMLElement | null = null;
+      if (node.matches(selector)) {
+        target = node;
+      } else {
+        target = node.querySelector<HTMLElement>(selector);
+      }
+      if (target && this.matchesKeywords(target)) {
+        this.handleMatch();
+      }
+    } catch { /* invalid selector */ }
+  }
 
-      // 第二步：等待一小段时间确保窗口完全激活
-      await this.delay(150);
+  private checkExisting(selector: string) {
+    if (this.isWindowFocused()) return;
+    try {
+      const el = document.querySelector<HTMLElement>(selector);
+      if (el && this.matchesKeywords(el)) {
+        this.handleMatch();
+      }
+    } catch { /* invalid selector */ }
+  }
 
-      // 第三步：聚焦弹窗元素
-      this.focusModalElement(modalElement);
+  private updateKeywordCache() {
+    this.cachedKeywords = this.settings.keywords.split(",").map((k) => k.trim().toLowerCase()).filter((k) => k.length > 0);
+  }
 
-      this.debug(this.t("reminderDetected") + ` (Modal: ${modalId})`);
-    } catch (error) {
-      console.error("Failed to focus modal:", error, `(Modal: ${modalId})`);
+  private matchesKeywords(el: HTMLElement): boolean {
+    if (this.cachedKeywords.length === 0) return true;
+    const text = (el.textContent || "").toLowerCase();
+    return this.cachedKeywords.some((kw) => text.includes(kw));
+  }
+
+  // --- Focus ---
+
+  private handleMatch() {
+    if (this.isWindowFocused()) {
+      this.debug(this.t("windowFocused"));
+      return;
     }
+
+    // Cooldown active → skip
+    if (this.settings.focusInterval > 0) {
+      const now = Date.now();
+      if ((now - this.lastFocusTime) / 1000 < this.settings.focusInterval) {
+        this.debug(this.t("cooldownActive"));
+        return;
+      }
+      this.lastFocusTime = now;
+    }
+
+    this.debug(this.t("matchDetected"));
+    void this.bringToFront();
   }
 
-  private delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  private isWindowFocused(): boolean {
+    const win = this.getElectronWindow();
+    if (win) return win.isFocused();
+    return document.hasFocus();
   }
 
-  private async ensureWindowVisible(): Promise<void> {
-    return new Promise((resolve) => {
-      // 基础：使用标准 API 聚焦
+  private async bringToFront() {
+    try {
       window.focus();
-
-      // 尝试使用 Electron API 进行更强力的聚焦
-      this.tryElectronFocus().then(() => resolve()).catch((err) => {
-        this.debug("Electron focus failed, falling back to standard focus", err);
-        resolve();
-      });
-    });
+      const win = this.getElectronWindow();
+      if (!win) return;
+      if (win.isMinimized()) win.restore();
+      if (!win.isVisible()) win.show();
+      if (!win.isAlwaysOnTop()) {
+        win.setAlwaysOnTop(true);
+        await new Promise((r) => setTimeout(r, 200));
+        win.setAlwaysOnTop(false);
+      }
+      win.focus();
+    } catch (e) {
+      console.error("[Bring to Front]", e);
+    }
   }
 
-  private async tryElectronFocus(): Promise<void> {
-    const electronWindow = window as ElectronWindow;
-    if (!electronWindow.require) {
-      return; // 非 Electron 环境
-    }
-
+  private getElectronWindow(): ElectronBrowserWindow | null {
     try {
-      const electron = electronWindow.require<{ remote?: ElectronRemote }>("electron");
-      const remote = electron?.remote;
-      
-      if (!remote) {
-        this.debug("Electron remote not available");
-        return;
+      const electronWindow = window as ElectronWindow;
+      if (electronWindow.require) {
+        try {
+          const remote = electronWindow.require<ElectronRemote>("@electron/remote");
+          if (remote) return remote.getCurrentWindow();
+        } catch { /* fallback to legacy */ }
+        const electron = electronWindow.require<{ remote?: ElectronRemote }>("electron");
+        return electron?.remote?.getCurrentWindow() ?? null;
       }
-
-      const currentWindow = remote.getCurrentWindow();
-      if (!currentWindow) {
-        return;
-      }
-
-      let needsActivation = false;
-
-      // 如果窗口最小化，先还原
-      if (currentWindow.isMinimized()) {
-        currentWindow.restore();
-        this.debug("Window restored from minimized state");
-        needsActivation = true;
-      }
-
-      // 如果窗口不可见，显示窗口
-      if (!currentWindow.isVisible()) {
-        currentWindow.show();
-        this.debug("Window made visible");
-        needsActivation = true;
-      }
-
-      // 如果窗口不在前台（被其他窗口遮盖），激活它
-      if (!currentWindow.isFocused()) {
-        this.debug("Window is not focused, bringing to front");
-        needsActivation = true;
-      }
-
-      if (needsActivation) {
-        // 短暂置顶确保窗口在最前面
-        if (!currentWindow.isAlwaysOnTop()) {
-          currentWindow.setAlwaysOnTop(true);
-          // 等待置顶完成后恢复状态
-          await this.delay(200);
-          currentWindow.setAlwaysOnTop(false);
-          currentWindow.focus(); // 确保获得焦点
-        } else {
-          currentWindow.focus();
-          await this.delay(100);
-        }
-      }
-    } catch (error) {
-      this.debug("Error in tryElectronFocus:", error);
-      // 不抛出错误，保证流程继续
-    }
+    } catch { /* fall through */ }
+    return null;
   }
 
-  private focusModalElement(modalElement: HTMLElement) {
-    // 聚焦整个弹窗容器
-    if (!modalElement.hasAttribute("tabindex")) {
-      modalElement.setAttribute("tabindex", "-1");
-    }
-    void this.focusWithRetry(modalElement, 3);
-    this.debug("Focusing modal container");
-
-    // 滚动到弹窗位置，确保用户能看到
-    modalElement.scrollIntoView({ behavior: "smooth", block: "center" });
-  }
-
-  private async focusWithRetry(element: HTMLElement, maxRetries: number) {
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        element.focus();
-
-        // 检查聚焦是否成功
-        if (document.activeElement === element) {
-          this.debug(`Focus successful on attempt ${i + 1}`);
-          return;
-        }
-
-        // 如果聚焦失败，等待一小段时间后重试
-        if (i < maxRetries - 1) {
-          await this.delay(50);
-        }
-      } catch (error) {
-        this.debug(`Focus attempt ${i + 1} error:`, error);
-        if (i < maxRetries - 1) {
-          await this.delay(50);
-        }
-      }
-    }
-    this.debug(`Failed to focus element after ${maxRetries} attempts`);
-  }
+  // --- i18n ---
 
   private updateTranslations() {
     const lang = this.getLanguage();
-    this.t = (key: TranslationKey) => {
-      return translations[lang][key] || translations["en"][key] || key;
-    };
+    this.t = (key: TranslationKey) => translations[lang][key] || translations["en"][key] || key;
   }
 
   private getLanguage(): "en" | "zh" {
     if (this.settings.language === "zh") return "zh";
     if (this.settings.language === "en") return "en";
-
-    // 自动检测语言
     const obsidianApp = this.app as ObsidianApp;
     const obsidianLang = obsidianApp.vault?.config?.language;
     const systemLang = navigator.language.toLowerCase();
-
-    if (obsidianLang?.includes("zh") || systemLang.includes("zh")) {
-      return "zh";
-    }
-
-    return "en";
+    return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
   }
+
+  // --- Settings ---
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.updateKeywordCache();
   }
 
   async saveSettings() {
     await this.saveData(this.settings);
     this.updateTranslations();
+    this.updateKeywordCache();
   }
 
   restartDetection() {
-    // 清理现有的检测机制
-    if (this.modalObserver) {
-      this.modalObserver.disconnect();
-      this.modalObserver = null;
-    }
-
-    if (this.detectionTimer) {
-      window.clearInterval(this.detectionTimer);
-      this.detectionTimer = null;
-    }
-
-    // 重新启动检测机制
-    this.setupModalDetection();
+    // Debounce: settings onChange fires on every keystroke
+    if (this.restartTimer) window.clearTimeout(this.restartTimer);
+    this.restartTimer = window.setTimeout(() => {
+      this.restartTimer = null;
+      this.cleanup();
+      this.setupDetection();
+    }, 300);
   }
 }
 
-class ReminderFocusSettingTab extends PluginSettingTab {
-  plugin: ReminderFocusPlugin;
+// --- Settings Tab ---
 
-  constructor(app: App, plugin: ReminderFocusPlugin) {
+class BringToFrontSettingTab extends PluginSettingTab {
+  plugin: BringToFrontPlugin;
+
+  constructor(app: App, plugin: BringToFrontPlugin) {
     super(app, plugin);
     this.plugin = plugin;
   }
 
   display(): void {
-    let { containerEl } = this;
+    const { containerEl } = this;
+    const t = this.plugin.t.bind(this.plugin);
     containerEl.empty();
 
-    // 语言选择
-    new Setting(containerEl)
-      .setName(this.plugin.t("language"))
-      .setDesc(this.plugin.t("languageDesc"))
-      .addDropdown((dropdown) =>
-        dropdown
-          .addOption("auto", this.plugin.t("auto"))
-          .addOption("zh", this.plugin.t("chinese"))
-          .addOption("en", this.plugin.t("english"))
-          .setValue(this.plugin.settings.language)
-          .onChange(async (value) => {
-            this.plugin.settings.language = value as "auto" | "zh" | "en";
-            await this.plugin.saveSettings();
-            // 重新显示设置页面以更新语言
-            this.display();
-            new Notice(this.plugin.t("settingsSaved"));
-          })
-      );
+    // Language
+    new Setting(containerEl).setName(t("language")).setDesc(t("languageDesc"))
+      .addDropdown((dd) => dd
+        .addOption("auto", t("auto")).addOption("zh", t("chinese")).addOption("en", t("english"))
+        .setValue(this.plugin.settings.language)
+        .onChange(async (v) => { this.plugin.settings.language = v as "auto" | "zh" | "en"; await this.plugin.saveSettings(); this.display(); }));
 
-    // 最小聚焦间隔（数字输入）
-    new Setting(containerEl)
-      .setName(this.plugin.t("focusInterval"))
-      .setDesc(this.plugin.t("focusIntervalDesc"))
-      .addText((text) => {
-        text
-          .setPlaceholder("10")
-          .setValue(String(this.plugin.settings.focusInterval))
-          .onChange(async (value) => {
-            const num = parseInt(value);
-            if (!isNaN(num) && num >= 1) {
-              this.plugin.settings.focusInterval = num;
-              await this.plugin.saveSettings();
-            } else {
-              new Notice(this.plugin.t("invalidInterval"));
-            }
-          });
-        // 使用数字输入体验
-        const input = text.inputEl;
-        input.type = "number";
-        input.min = "1";
-        input.step = "1";
+    // Keywords
+    new Setting(containerEl).setName(t("keywords")).setDesc(t("keywordsDesc"))
+      .addTextArea((ta) => {
+        ta.setPlaceholder("Snooze, Done").setValue(this.plugin.settings.keywords)
+          .onChange(async (v) => { this.plugin.settings.keywords = v; await this.plugin.saveSettings(); this.plugin.restartDetection(); });
+        ta.inputEl.rows = 2;
+        ta.inputEl.style.width = "100%";
       });
 
-    // 检测间隔（数字输入）
-    new Setting(containerEl)
-      .setName(this.plugin.t("detectionInterval"))
-      .setDesc(this.plugin.t("detectionIntervalDesc"))
-      .addText((text) => {
-        text
-          .setPlaceholder("5000")
-          .setValue(String(this.plugin.settings.detectionInterval))
-          .onChange(async (value) => {
-            const num = parseInt(value);
-            if (!isNaN(num) && num >= 100) {
-              this.plugin.settings.detectionInterval = num;
-              await this.plugin.saveSettings();
-              // 重新启动检测机制以应用新间隔
-              this.plugin.restartDetection();
-            } else {
-              new Notice(this.plugin.t("invalidDetectionInterval"));
-            }
-          });
-        // 使用数字输入体验
-        const input = text.inputEl;
-        input.type = "number";
-        input.min = "100";
-        input.step = "100";
+    // Watch scope
+    new Setting(containerEl).setName(t("watchScope")).setDesc(t("watchScopeDesc"))
+      .addDropdown((dd) => dd
+        .addOption("modal", t("scopeModal")).addOption("notice", t("scopeNotice"))
+        .addOption("both", t("scopeBoth")).addOption("custom", t("scopeCustom"))
+        .setValue(this.plugin.settings.watchScope)
+        .onChange(async (v) => { this.plugin.settings.watchScope = v as "modal" | "notice" | "both" | "custom"; await this.plugin.saveSettings(); this.plugin.restartDetection(); this.display(); }));
+
+    // Custom selector (only when scope = custom)
+    if (this.plugin.settings.watchScope === "custom") {
+      new Setting(containerEl).setName(t("customSelector")).setDesc(t("customSelectorDesc"))
+        .addText((tx) => tx
+          .setPlaceholder(".modal-container, .notice")
+          .setValue(this.plugin.settings.customSelector)
+          .onChange(async (v) => { this.plugin.settings.customSelector = v; await this.plugin.saveSettings(); this.plugin.restartDetection(); }));
+    }
+
+    // Focus cooldown (main setting, not advanced)
+    new Setting(containerEl).setName(t("focusInterval")).setDesc(t("focusIntervalDesc"))
+      .addText((tx) => {
+        tx.setPlaceholder("5").setValue(String(this.plugin.settings.focusInterval))
+          .onChange(async (v) => { const n = parseInt(v); if (!isNaN(n) && n >= 0) { this.plugin.settings.focusInterval = n; await this.plugin.saveSettings(); } });
+        tx.inputEl.type = "number"; tx.inputEl.min = "0"; tx.inputEl.step = "1";
       });
 
-    // 调试模式
-    new Setting(containerEl)
-      .setName(this.plugin.t("debugMode"))
-      .setDesc(this.plugin.t("debugModeDesc"))
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.debugMode).onChange(async (value) => {
-          this.plugin.settings.debugMode = value;
-          await this.plugin.saveSettings();
-        })
-      );
+    // Debug
+    new Setting(containerEl).setName(t("debugMode")).setDesc(t("debugModeDesc"))
+      .addToggle((tg) => tg.setValue(this.plugin.settings.debugMode).onChange(async (v) => { this.plugin.settings.debugMode = v; await this.plugin.saveSettings(); }));
+
+    // --- Guide ---
+    const guide = containerEl.createEl("details");
+    guide.style.cssText = "margin-top:16px;padding:8px 12px;border:1px solid var(--background-modifier-border);border-radius:8px";
+    guide.createEl("summary", { text: t("guide"), attr: { style: "cursor:pointer;font-weight:600;color:var(--text-accent)" } });
+    const gc = guide.createDiv({ attr: { style: "margin-top:8px;font-size:0.9em;line-height:1.6" } });
+    gc.createEl("p", { text: t("guideKeywords") });
+    gc.createEl("p", { text: t("guideScope") });
+    gc.createEl("h4", { text: t("guideExamples") });
+    const ul = gc.createEl("ul", { attr: { style: "padding-left:20px" } });
+    ul.createEl("li", { text: t("guideEx1") });
+    ul.createEl("li", { text: t("guideEx2") });
+    ul.createEl("li", { text: t("guideEx3") });
+    gc.createEl("p", { text: t("guideTip"), attr: { style: "margin-top:8px;padding:6px 10px;background:var(--background-secondary);border-radius:4px;font-size:0.85em" } });
   }
 }
