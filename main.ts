@@ -46,18 +46,18 @@ const translations: { en: TranslationRecord; zh: TranslationRecord } = {
     keywords: "Keywords (optional)",
     keywordsDesc: "Leave empty to bring to front on any modal/notice when Obsidian is in the background. Add comma-separated keywords to trigger when any one of them appears.",
     watchScope: "Watch scope", watchScopeDesc: "Which elements to monitor",
-    scopeModal: "Modals", scopeNotice: "Notices", scopeBoth: "Modals & Notices", scopeCustom: "Custom selector",
-    customSelector: "CSS Selector", customSelectorDesc: "Custom CSS selector (e.g. .modal-container, [data-type=\"my-plugin\"])",
+    scopeModal: "Modals", scopeNotice: "Notices", scopeBoth: "Modals & notices", scopeCustom: "Custom selector",
+    customSelector: "CSS selector", customSelectorDesc: "Custom CSS selector (e.g. .modal-container, [data-type=\"my-plugin\"])",
     focusInterval: "Focus cooldown (seconds)", focusIntervalDesc: "Minimum time between focus actions. Prevents repeated focus stealing. 0 = no cooldown",
     debugMode: "Debug mode", debugModeDesc: "Log matching details to console (Ctrl+Shift+I)",
     matchDetected: "Match detected, bringing to front",
     windowFocused: "Window already focused, skipping",
     cooldownActive: "Cooldown active, skipping",
-    guide: "Quick Start Guide",
+    guide: "Quick start guide",
     guideKeywords: "By default (no keywords), Obsidian is brought to front whenever a modal or notice appears while it is in the background. Add comma-separated keywords to only trigger when any keyword appears in the element text.",
     guideScope: "Watch scope: \"Modals\" watches popup dialogs, \"Notices\" watches toast messages, \"Both\" watches everything. Use \"Custom\" for advanced CSS selectors.",
     guideExamples: "Examples",
-    guideEx1: "Reminder popup → keywords \"Snooze, Done\", scope \"Modals\"",
+    guideEx1: "Reminder popup → keywords \"snooze, done\", scope \"Modals\"",
     guideEx2: "Error alerts → keywords \"error, failed\", scope \"Notices\"",
     guideEx3: "All modals & notices → leave keywords empty, scope \"Both\" (default)",
     guideTip: "Tip: To find a CSS selector — open DevTools (Ctrl+Shift+I), click the inspect icon (top-left of DevTools panel), click the target element, then use the class names shown in the Elements panel (e.g. .my-plugin-modal).",
@@ -78,7 +78,7 @@ const translations: { en: TranslationRecord; zh: TranslationRecord } = {
     guideKeywords: "默认无需配置：后台出现弹窗或通知时自动置顶。如需过滤，填入逗号分隔的关键词，出现任一关键词即触发。",
     guideScope: "监听范围：「弹窗」监听对话框弹窗，「通知」监听右上角提示消息，「弹窗和通知」同时监听两者。需要更灵活的匹配请选「自定义」输入 CSS 选择器。",
     guideExamples: "配置示例",
-    guideEx1: "提醒弹窗 → 关键词 \"Snooze, Done\"，范围「弹窗」",
+    guideEx1: "提醒弹窗 → 关键词 \"snooze, done\"，范围「弹窗」",
     guideEx2: "错误提示 → 关键词 \"error, failed\"，范围「通知」",
     guideEx3: "所有弹窗和通知 → 关键词留空，范围「弹窗和通知」（默认）",
     guideTip: "提示：查找 CSS 选择器——打开开发者工具（Ctrl+Shift+I），点击左上角的选择器图标，点击目标元素，在 Elements 面板中查看 class 名称（如 .my-plugin-modal）。",
@@ -331,7 +331,7 @@ class BringToFrontSettingTab extends PluginSettingTab {
     // Keywords
     new Setting(containerEl).setName(t("keywords")).setDesc(t("keywordsDesc"))
       .addTextArea((ta) => {
-        ta.setPlaceholder("Snooze, Done").setValue(this.plugin.settings.keywords)
+        ta.setPlaceholder("snooze, done").setValue(this.plugin.settings.keywords)
           .onChange(async (v) => { this.plugin.settings.keywords = v; await this.plugin.saveSettings(); this.plugin.restartDetection(); });
         ta.inputEl.rows = 2;
       });

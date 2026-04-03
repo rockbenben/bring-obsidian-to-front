@@ -42,9 +42,9 @@ var translations = {
     watchScopeDesc: "Which elements to monitor",
     scopeModal: "Modals",
     scopeNotice: "Notices",
-    scopeBoth: "Modals & Notices",
+    scopeBoth: "Modals & notices",
     scopeCustom: "Custom selector",
-    customSelector: "CSS Selector",
+    customSelector: "CSS selector",
     customSelectorDesc: 'Custom CSS selector (e.g. .modal-container, [data-type="my-plugin"])',
     focusInterval: "Focus cooldown (seconds)",
     focusIntervalDesc: "Minimum time between focus actions. Prevents repeated focus stealing. 0 = no cooldown",
@@ -53,11 +53,11 @@ var translations = {
     matchDetected: "Match detected, bringing to front",
     windowFocused: "Window already focused, skipping",
     cooldownActive: "Cooldown active, skipping",
-    guide: "Quick Start Guide",
+    guide: "Quick start guide",
     guideKeywords: "By default (no keywords), Obsidian is brought to front whenever a modal or notice appears while it is in the background. Add comma-separated keywords to only trigger when any keyword appears in the element text.",
     guideScope: 'Watch scope: "Modals" watches popup dialogs, "Notices" watches toast messages, "Both" watches everything. Use "Custom" for advanced CSS selectors.',
     guideExamples: "Examples",
-    guideEx1: 'Reminder popup \u2192 keywords "Snooze, Done", scope "Modals"',
+    guideEx1: 'Reminder popup \u2192 keywords "snooze, done", scope "Modals"',
     guideEx2: 'Error alerts \u2192 keywords "error, failed", scope "Notices"',
     guideEx3: 'All modals & notices \u2192 leave keywords empty, scope "Both" (default)',
     guideTip: "Tip: To find a CSS selector \u2014 open DevTools (Ctrl+Shift+I), click the inspect icon (top-left of DevTools panel), click the target element, then use the class names shown in the Elements panel (e.g. .my-plugin-modal)."
@@ -89,7 +89,7 @@ var translations = {
     guideKeywords: "\u9ED8\u8BA4\u65E0\u9700\u914D\u7F6E\uFF1A\u540E\u53F0\u51FA\u73B0\u5F39\u7A97\u6216\u901A\u77E5\u65F6\u81EA\u52A8\u7F6E\u9876\u3002\u5982\u9700\u8FC7\u6EE4\uFF0C\u586B\u5165\u9017\u53F7\u5206\u9694\u7684\u5173\u952E\u8BCD\uFF0C\u51FA\u73B0\u4EFB\u4E00\u5173\u952E\u8BCD\u5373\u89E6\u53D1\u3002",
     guideScope: "\u76D1\u542C\u8303\u56F4\uFF1A\u300C\u5F39\u7A97\u300D\u76D1\u542C\u5BF9\u8BDD\u6846\u5F39\u7A97\uFF0C\u300C\u901A\u77E5\u300D\u76D1\u542C\u53F3\u4E0A\u89D2\u63D0\u793A\u6D88\u606F\uFF0C\u300C\u5F39\u7A97\u548C\u901A\u77E5\u300D\u540C\u65F6\u76D1\u542C\u4E24\u8005\u3002\u9700\u8981\u66F4\u7075\u6D3B\u7684\u5339\u914D\u8BF7\u9009\u300C\u81EA\u5B9A\u4E49\u300D\u8F93\u5165 CSS \u9009\u62E9\u5668\u3002",
     guideExamples: "\u914D\u7F6E\u793A\u4F8B",
-    guideEx1: '\u63D0\u9192\u5F39\u7A97 \u2192 \u5173\u952E\u8BCD "Snooze, Done"\uFF0C\u8303\u56F4\u300C\u5F39\u7A97\u300D',
+    guideEx1: '\u63D0\u9192\u5F39\u7A97 \u2192 \u5173\u952E\u8BCD "snooze, done"\uFF0C\u8303\u56F4\u300C\u5F39\u7A97\u300D',
     guideEx2: '\u9519\u8BEF\u63D0\u793A \u2192 \u5173\u952E\u8BCD "error, failed"\uFF0C\u8303\u56F4\u300C\u901A\u77E5\u300D',
     guideEx3: "\u6240\u6709\u5F39\u7A97\u548C\u901A\u77E5 \u2192 \u5173\u952E\u8BCD\u7559\u7A7A\uFF0C\u8303\u56F4\u300C\u5F39\u7A97\u548C\u901A\u77E5\u300D\uFF08\u9ED8\u8BA4\uFF09",
     guideTip: "\u63D0\u793A\uFF1A\u67E5\u627E CSS \u9009\u62E9\u5668\u2014\u2014\u6253\u5F00\u5F00\u53D1\u8005\u5DE5\u5177\uFF08Ctrl+Shift+I\uFF09\uFF0C\u70B9\u51FB\u5DE6\u4E0A\u89D2\u7684\u9009\u62E9\u5668\u56FE\u6807\uFF0C\u70B9\u51FB\u76EE\u6807\u5143\u7D20\uFF0C\u5728 Elements \u9762\u677F\u4E2D\u67E5\u770B class \u540D\u79F0\uFF08\u5982 .my-plugin-modal\uFF09\u3002"
@@ -291,7 +291,7 @@ var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
       this.display();
     }));
     new import_obsidian.Setting(containerEl).setName(t("keywords")).setDesc(t("keywordsDesc")).addTextArea((ta) => {
-      ta.setPlaceholder("Snooze, Done").setValue(this.plugin.settings.keywords).onChange(async (v) => {
+      ta.setPlaceholder("snooze, done").setValue(this.plugin.settings.keywords).onChange(async (v) => {
         this.plugin.settings.keywords = v;
         await this.plugin.saveSettings();
         this.plugin.restartDetection();
