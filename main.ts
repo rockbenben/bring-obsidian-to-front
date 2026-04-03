@@ -122,7 +122,7 @@ export default class BringToFrontPlugin extends Plugin {
   public t!: (key: TranslationKey) => string;
 
   private debug(msg: string) {
-    if (this.settings?.debugMode) console.log(`[Bring to Front] ${msg}`);
+    if (this.settings?.debugMode) console.debug(`[Bring to Front] ${msg}`);
   }
 
   async onload() {
@@ -334,7 +334,6 @@ class BringToFrontSettingTab extends PluginSettingTab {
         ta.setPlaceholder("Snooze, Done").setValue(this.plugin.settings.keywords)
           .onChange(async (v) => { this.plugin.settings.keywords = v; await this.plugin.saveSettings(); this.plugin.restartDetection(); });
         ta.inputEl.rows = 2;
-        ta.inputEl.style.width = "100%";
       });
 
     // Watch scope
@@ -368,16 +367,15 @@ class BringToFrontSettingTab extends PluginSettingTab {
 
     // --- Guide ---
     const guide = containerEl.createEl("details");
-    guide.style.cssText = "margin-top:16px;padding:8px 12px;border:1px solid var(--background-modifier-border);border-radius:8px";
-    guide.createEl("summary", { text: t("guide"), attr: { style: "cursor:pointer;font-weight:600;color:var(--text-accent)" } });
-    const gc = guide.createDiv({ attr: { style: "margin-top:8px;font-size:0.9em;line-height:1.6" } });
+    guide.createEl("summary", { text: t("guide") });
+    const gc = guide.createDiv();
     gc.createEl("p", { text: t("guideKeywords") });
     gc.createEl("p", { text: t("guideScope") });
-    gc.createEl("h4", { text: t("guideExamples") });
-    const ul = gc.createEl("ul", { attr: { style: "padding-left:20px" } });
+    new Setting(gc).setName(t("guideExamples")).setHeading();
+    const ul = gc.createEl("ul");
     ul.createEl("li", { text: t("guideEx1") });
     ul.createEl("li", { text: t("guideEx2") });
     ul.createEl("li", { text: t("guideEx3") });
-    gc.createEl("p", { text: t("guideTip"), attr: { style: "margin-top:8px;padding:6px 10px;background:var(--background-secondary);border-radius:4px;font-size:0.85em" } });
+    gc.createEl("p", { text: t("guideTip") });
   }
 }

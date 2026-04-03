@@ -117,7 +117,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     this.cachedKeywords = [];
   }
   debug(msg) {
-    if (this.settings?.debugMode) console.log(`[Bring to Front] ${msg}`);
+    if (this.settings?.debugMode) console.debug(`[Bring to Front] ${msg}`);
   }
   async onload() {
     await this.loadSettings();
@@ -297,7 +297,6 @@ var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
         this.plugin.restartDetection();
       });
       ta.inputEl.rows = 2;
-      ta.inputEl.style.width = "100%";
     });
     new import_obsidian.Setting(containerEl).setName(t("watchScope")).setDesc(t("watchScopeDesc")).addDropdown((dd) => dd.addOption("modal", t("scopeModal")).addOption("notice", t("scopeNotice")).addOption("both", t("scopeBoth")).addOption("custom", t("scopeCustom")).setValue(this.plugin.settings.watchScope).onChange(async (v) => {
       this.plugin.settings.watchScope = v;
@@ -329,16 +328,15 @@ var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
       await this.plugin.saveSettings();
     }));
     const guide = containerEl.createEl("details");
-    guide.style.cssText = "margin-top:16px;padding:8px 12px;border:1px solid var(--background-modifier-border);border-radius:8px";
-    guide.createEl("summary", { text: t("guide"), attr: { style: "cursor:pointer;font-weight:600;color:var(--text-accent)" } });
-    const gc = guide.createDiv({ attr: { style: "margin-top:8px;font-size:0.9em;line-height:1.6" } });
+    guide.createEl("summary", { text: t("guide") });
+    const gc = guide.createDiv();
     gc.createEl("p", { text: t("guideKeywords") });
     gc.createEl("p", { text: t("guideScope") });
-    gc.createEl("h4", { text: t("guideExamples") });
-    const ul = gc.createEl("ul", { attr: { style: "padding-left:20px" } });
+    new import_obsidian.Setting(gc).setName(t("guideExamples")).setHeading();
+    const ul = gc.createEl("ul");
     ul.createEl("li", { text: t("guideEx1") });
     ul.createEl("li", { text: t("guideEx2") });
     ul.createEl("li", { text: t("guideEx3") });
-    gc.createEl("p", { text: t("guideTip"), attr: { style: "margin-top:8px;padding:6px 10px;background:var(--background-secondary);border-radius:4px;font-size:0.85em" } });
+    gc.createEl("p", { text: t("guideTip") });
   }
 };
