@@ -291,7 +291,7 @@ var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
       this.display();
     }));
     new import_obsidian.Setting(containerEl).setName(t("keywords")).setDesc(t("keywordsDesc")).addTextArea((ta) => {
-      ta.setPlaceholder("snooze, done").setValue(this.plugin.settings.keywords).onChange(async (v) => {
+      ta.setPlaceholder("Snooze, done").setValue(this.plugin.settings.keywords).onChange(async (v) => {
         this.plugin.settings.keywords = v;
         await this.plugin.saveSettings();
         this.plugin.restartDetection();

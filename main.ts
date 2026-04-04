@@ -331,7 +331,7 @@ class BringToFrontSettingTab extends PluginSettingTab {
     // Keywords
     new Setting(containerEl).setName(t("keywords")).setDesc(t("keywordsDesc"))
       .addTextArea((ta) => {
-        ta.setPlaceholder("snooze, done").setValue(this.plugin.settings.keywords)
+        ta.setPlaceholder("Snooze, done").setValue(this.plugin.settings.keywords)
           .onChange(async (v) => { this.plugin.settings.keywords = v; await this.plugin.saveSettings(); this.plugin.restartDetection(); });
         ta.inputEl.rows = 2;
       });
