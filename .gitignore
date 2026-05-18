@@ -24,7 +24,6 @@ Thumbs.db
 
 # Package manager
 yarn-error.log
-package-lock.json
 yarn.lock
 
 # Output files that shouldn't be tracked

@@ -42,7 +42,7 @@ try {
 
   // Git operations
   console.log("Adding files to git...");
-  execSync("git add manifest.json versions.json package.json", { stdio: "inherit" });
+  execSync("git add manifest.json versions.json package.json package-lock.json", { stdio: "inherit" });
 
   console.log(`Committing changes for ${newVersion}...`);
   execSync(`git commit -m "chore(release): bump version to ${newVersion}"`, { stdio: "inherit" });
