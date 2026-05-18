@@ -7,7 +7,7 @@
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
     "bump": "node version-bump.mjs patch",
-    "release": "npm run bump && git push && git push --tags"
+    "release": "node version-bump.mjs patch --push"
   },
   "author": "rockbenben",
   "license": "MIT",

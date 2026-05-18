@@ -2,7 +2,9 @@ import { execSync } from "child_process";
 import { readFileSync, writeFileSync } from "fs";
 
 // Get the version type from command line args (patch, minor, major)
-const versionType = process.argv[2] || "patch";
+const args = process.argv.slice(2);
+const shouldPush = args.includes("--push");
+const versionType = args.find((a) => !a.startsWith("--")) || "patch";
 
 function updateManifestAndVersions(targetVersion) {
   // read minAppVersion from manifest.json and bump version to target version
@@ -51,7 +53,15 @@ try {
   execSync(`git tag ${newVersion}`, { stdio: "inherit" });
 
   console.log(`✅ Successfully bumped to v${newVersion}`);
-  console.log(`Run 'git push && git push --tags' to publish, or use 'npm run release' to do both at once`);
+
+  if (shouldPush) {
+    console.log(`Pushing commit and tag ${newVersion}...`);
+    execSync("git push", { stdio: "inherit" });
+    execSync(`git push origin ${newVersion}`, { stdio: "inherit" });
+    console.log(`🚀 Published v${newVersion}`);
+  } else {
+    console.log(`Run 'git push && git push origin ${newVersion}' to publish, or use 'npm run release' next time to do both at once`);
+  }
 } catch (error) {
   console.error("❌ Error during version bump:", error.message);
   process.exit(1);
