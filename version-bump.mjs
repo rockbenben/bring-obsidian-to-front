@@ -51,7 +51,7 @@ try {
   execSync(`git tag ${newVersion}`, { stdio: "inherit" });
 
   console.log(`✅ Successfully bumped to v${newVersion}`);
-  console.log(`Run 'git push && git push --tags' to publish`);
+  console.log(`Run 'git push && git push --tags' to publish, or use 'npm run release' to do both at once`);
 } catch (error) {
   console.error("❌ Error during version bump:", error.message);
   process.exit(1);

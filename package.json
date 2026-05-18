@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
-    "bump": "node version-bump.mjs patch"
+    "bump": "node version-bump.mjs patch",
+    "release": "npm run bump && git push && git push --tags"
   },
   "author": "rockbenben",
   "license": "MIT",
