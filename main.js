@@ -132,7 +132,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   cleanup() {
     this.observer?.disconnect();
     this.observer = null;
-    if (this.restartTimer) window.clearTimeout(this.restartTimer);
+    if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
     this.restartTimer = null;
   }
   // --- Detection ---
@@ -148,13 +148,13 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
           const node = mutation.addedNodes[i];
-          if (node instanceof HTMLElement) {
+          if (node.instanceOf(HTMLElement)) {
             this.checkNode(node, selector);
           }
         }
       }
     });
-    this.observer.observe(document.body, { childList: true, subtree: true });
+    this.observer.observe(activeDocument.body, { childList: true, subtree: true });
     this.checkExisting(selector);
   }
   checkNode(node, selector) {
@@ -174,7 +174,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   checkExisting(selector) {
     if (this.isWindowFocused()) return;
     try {
-      const el = document.querySelector(selector);
+      const el = activeDocument.querySelector(selector);
       if (el && this.matchesKeywords(el)) {
         this.handleMatch();
       }
@@ -209,7 +209,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   isWindowFocused() {
     const win = this.getElectronWindow();
     if (win) return win.isFocused();
-    return document.hasFocus();
+    return activeDocument.hasFocus();
   }
   async bringToFront() {
     try {
@@ -220,7 +220,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
       if (!win.isVisible()) win.show();
       if (!win.isAlwaysOnTop()) {
         win.setAlwaysOnTop(true);
-        await new Promise((r) => setTimeout(r, 200));
+        await new Promise((r) => activeWindow.setTimeout(r, 200));
         win.setAlwaysOnTop(false);
       }
       win.focus();
@@ -259,7 +259,8 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   }
   // --- Settings ---
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     this.updateKeywordCache();
   }
   async saveSettings() {
@@ -268,8 +269,8 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     this.updateKeywordCache();
   }
   restartDetection() {
-    if (this.restartTimer) window.clearTimeout(this.restartTimer);
-    this.restartTimer = window.setTimeout(() => {
+    if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
+    this.restartTimer = activeWindow.setTimeout(() => {
       this.restartTimer = null;
       this.cleanup();
       this.setupDetection();

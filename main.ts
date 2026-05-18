@@ -140,7 +140,7 @@ export default class BringToFrontPlugin extends Plugin {
   private cleanup() {
     this.observer?.disconnect();
     this.observer = null;
-    if (this.restartTimer) window.clearTimeout(this.restartTimer);
+    if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
     this.restartTimer = null;
   }
 
@@ -160,13 +160,13 @@ export default class BringToFrontPlugin extends Plugin {
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
           const node = mutation.addedNodes[i];
-          if (node instanceof HTMLElement) {
+          if (node.instanceOf(HTMLElement)) {
             this.checkNode(node, selector);
           }
         }
       }
     });
-    this.observer.observe(document.body, { childList: true, subtree: true });
+    this.observer.observe(activeDocument.body, { childList: true, subtree: true });
 
     this.checkExisting(selector);
   }
@@ -188,7 +188,7 @@ export default class BringToFrontPlugin extends Plugin {
   private checkExisting(selector: string) {
     if (this.isWindowFocused()) return;
     try {
-      const el = document.querySelector<HTMLElement>(selector);
+      const el = activeDocument.querySelector<HTMLElement>(selector);
       if (el && this.matchesKeywords(el)) {
         this.handleMatch();
       }
@@ -230,7 +230,7 @@ export default class BringToFrontPlugin extends Plugin {
   private isWindowFocused(): boolean {
     const win = this.getElectronWindow();
     if (win) return win.isFocused();
-    return document.hasFocus();
+    return activeDocument.hasFocus();
   }
 
   private async bringToFront() {
@@ -242,7 +242,7 @@ export default class BringToFrontPlugin extends Plugin {
       if (!win.isVisible()) win.show();
       if (!win.isAlwaysOnTop()) {
         win.setAlwaysOnTop(true);
-        await new Promise((r) => setTimeout(r, 200));
+        await new Promise((r) => activeWindow.setTimeout(r, 200));
         win.setAlwaysOnTop(false);
       }
       win.focus();
@@ -285,7 +285,8 @@ export default class BringToFrontPlugin extends Plugin {
   // --- Settings ---
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const data = (await this.loadData()) as Partial<BringToFrontSettings> | null;
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, data);
     this.updateKeywordCache();
   }
 
@@ -297,8 +298,8 @@ export default class BringToFrontPlugin extends Plugin {
 
   restartDetection() {
     // Debounce: settings onChange fires on every keystroke
-    if (this.restartTimer) window.clearTimeout(this.restartTimer);
-    this.restartTimer = window.setTimeout(() => {
+    if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
+    this.restartTimer = activeWindow.setTimeout(() => {
       this.restartTimer = null;
       this.cleanup();
       this.setupDetection();
