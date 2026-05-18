@@ -13,7 +13,7 @@ When Obsidian is in the background and a modal or notice appears, this plugin au
 
 ![demo](demo.gif)
 
-## Key Features
+## Key features
 
 - **Auto bring-to-front:** When Obsidian is in the background, automatically brings the window to front on new modals or notices
 - **Keyword filtering:** Optional comma-separated keywords to trigger only on specific content
@@ -23,7 +23,16 @@ When Obsidian is in the background and a modal or notice appears, this plugin au
 
 ## Installation
 
-### Method 1: Manual Installation
+### Method 1: Obsidian community plugins (recommended)
+
+1. Open Settings -> Community plugins
+2. Make sure Restricted mode is off, then click Browse
+3. Search for "Bring to Front" and click Install
+4. Click Enable
+
+Or install directly from the [community plugin page](https://community.obsidian.md/plugins/bring-to-front).
+
+### Method 2: Manual installation
 
 1. Download the latest release from [GitHub Releases](https://github.com/rockbenben/bring-obsidian-to-front/releases)
 2. Extract the downloaded files
@@ -34,18 +43,11 @@ When Obsidian is in the background and a modal or notice appears, this plugin au
    ```
 
 4. Restart Obsidian or reload plugins
-5. Enable the plugin in Settings -> Community Plugins
-
-### Method 2: Using BRAT (Beta Reviewers Auto-update Tool)
-
-1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat)
-2. Open BRAT settings and click Add Beta Plugin
-3. Enter the repository: rockbenben/bring-obsidian-to-front
-4. Click Add Plugin and enable it
+5. Enable the plugin in Settings -> Community plugins
 
 ## Configuration
 
-Open Settings -> Community Plugins -> Bring to Front.
+Open Settings -> Community plugins -> Bring to Front.
 
 ### Settings
 
@@ -53,14 +55,14 @@ Open Settings -> Community Plugins -> Bring to Front.
 | ------------------ | ------------------------------------------------------------------ | --------------- | ------------------ |
 | Language           | Interface language                                                 | Auto-detect     | Auto / English / 中文 |
 | Keywords           | Comma-separated keywords to filter triggers, case-insensitive (empty = match all) | Empty           | Any text           |
-| Watch scope        | Which DOM elements to monitor                                      | Modals & Notices| Modals / Notices / Both / Custom |
+| Watch scope        | Which DOM elements to monitor                                      | Modals & notices| Modals / Notices / Both / Custom |
 | Custom CSS selector| Custom selector (only when scope = Custom)                         | Empty           | Valid CSS selector |
 | Focus cooldown     | Minimum seconds between focus actions (0 = no cooldown)            | 5 seconds       | >= 0               |
 | Debug mode         | Log matching details to console                                    | Disabled        | On / Off           |
 
-### Usage Examples
+### Usage examples
 
-| Use Case            | Keywords        | Watch Scope |
+| Use case            | Keywords        | Watch scope |
 | ------------------- | --------------- | ----------- |
 | Any modal/notice    | (leave empty)   | Both        |
 | Reminder popup      | `Snooze, Done`  | Modals      |
@@ -72,7 +74,7 @@ Open Settings -> Community Plugins -> Bring to Front.
 - Shorter focus cooldown (1-30 s) = for frequent triggers
 - Longer focus cooldown (>= 120 s) = less intrusive
 
-## How It Works
+## How it works
 
 1. **MutationObserver:** Watches the DOM in real time for new elements matching the configured scope
 2. **Keyword matching:** If keywords are configured, the element's text content is checked against them
@@ -87,7 +89,7 @@ Open Settings -> Community Plugins -> Bring to Front.
 | Not detecting        | Wrong scope or keywords      | Check settings; try empty keywords with "Both" scope |
 | Language not switching| Cache/reload issue           | Restart Obsidian after changing language |
 
-### Debug Steps
+### Debug steps
 
 1. Enable debug mode in settings
 2. Open devtools console (Ctrl+Shift+I)

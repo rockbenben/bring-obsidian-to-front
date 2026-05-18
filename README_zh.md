@@ -23,7 +23,16 @@
 
 ## 安装
 
-### 方式一：手动安装
+### 方式一：Obsidian 社区插件市场（推荐）
+
+1. 打开 设置 -> 第三方插件
+2. 确认已关闭「安全模式」，然后点击「浏览」
+3. 搜索 "Bring to Front"，点击「安装」
+4. 点击「启用」
+
+也可以直接通过[社区插件页面](https://community.obsidian.md/plugins/bring-to-front)安装。
+
+### 方式二：手动安装
 
 1. 从 [GitHub Releases](https://github.com/rockbenben/bring-obsidian-to-front/releases) 下载最新版本
 2. 解压下载的文件
@@ -34,18 +43,11 @@
    ```
 
 4. 重启 Obsidian 或重新加载插件
-5. 在设置 -> 社区插件中启用该插件
-
-### 方式二：使用 BRAT
-
-1. 安装 [BRAT 插件](https://github.com/TfTHacker/obsidian42-brat)
-2. 打开 BRAT 设置，点击 Add Beta Plugin
-3. 输入仓库地址：rockbenben/bring-obsidian-to-front
-4. 点击 Add Plugin 并启用
+5. 在设置 -> 第三方插件中启用该插件
 
 ## 配置
 
-打开设置 -> 社区插件 -> Bring to Front。
+打开设置 -> 第三方插件 -> Bring to Front。
 
 ### 设置项
 
