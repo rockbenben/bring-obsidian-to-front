@@ -20,10 +20,6 @@ interface ElectronBrowserWindow {
   focus(): void;
 }
 
-interface ObsidianApp extends App {
-  vault: { config?: { language?: string } } & App["vault"];
-}
-
 // --- i18n ---
 
 type TranslationKey =
@@ -102,6 +98,10 @@ const SCOPE_SELECTORS: Record<string, string> = {
   both: ".modal-container, .notice",
 };
 
+// How long to keep watching a matched element whose text isn't set yet.
+// Bounds resource use while covering async modal content / deferred Notice.setMessage.
+const DEFERRED_TEXT_WINDOW_MS = 3000;
+
 const DEFAULT_SETTINGS: BringToFrontSettings = {
   keywords: "",
   watchScope: "both",
@@ -119,6 +119,8 @@ export default class BringToFrontPlugin extends Plugin {
   private observer: MutationObserver | null = null;
   private restartTimer: number | null = null;
   private cachedKeywords: string[] = [];
+  private deferredObservers = new Map<MutationObserver, number>();
+  private watchedTargets = new WeakSet<HTMLElement>();
   public t!: (key: TranslationKey) => string;
 
   private debug(msg: string) {
@@ -142,6 +144,16 @@ export default class BringToFrontPlugin extends Plugin {
     this.observer = null;
     if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
     this.restartTimer = null;
+    this.clearDeferredObservers();
+  }
+
+  private clearDeferredObservers() {
+    for (const [obs, timer] of this.deferredObservers) {
+      obs.disconnect();
+      activeWindow.clearTimeout(timer);
+    }
+    this.deferredObservers.clear();
+    this.watchedTargets = new WeakSet();
   }
 
   // --- Detection ---
@@ -157,6 +169,16 @@ export default class BringToFrontPlugin extends Plugin {
     const selector = this.getSelector();
 
     this.observer = new MutationObserver((mutations) => {
+      // Hot path: editor churn (the bulk of DOM mutations) happens while the
+      // window is focused, and a focused window can never trigger a bring-to-
+      // front (handleMatch no-ops). With no keyword filter there are also no
+      // deferred watchers to attach — so the whole scan is wasted work. Skip it.
+      // Gate on document.hasFocus() — the main renderer window, the same window
+      // handleMatch/bringToFront act on — NOT activeDocument, which points at a
+      // focused pop-out and would wrongly skip a notice firing in the background
+      // main window. Cheap DOM read (no Electron IPC); a false negative only
+      // forgoes the optimization, never changes behavior.
+      if (this.cachedKeywords.length === 0 && document.hasFocus()) return;
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
           const node = mutation.addedNodes[i];
@@ -173,15 +195,8 @@ export default class BringToFrontPlugin extends Plugin {
 
   private checkNode(node: HTMLElement, selector: string) {
     try {
-      let target: HTMLElement | null = null;
-      if (node.matches(selector)) {
-        target = node;
-      } else {
-        target = node.querySelector<HTMLElement>(selector);
-      }
-      if (target && this.matchesKeywords(target)) {
-        this.handleMatch();
-      }
+      const target = node.matches(selector) ? node : node.querySelector<HTMLElement>(selector);
+      if (target) this.evaluateTarget(target);
     } catch { /* invalid selector */ }
   }
 
@@ -189,9 +204,7 @@ export default class BringToFrontPlugin extends Plugin {
     if (this.isWindowFocused()) return;
     try {
       const el = activeDocument.querySelector<HTMLElement>(selector);
-      if (el && this.matchesKeywords(el)) {
-        this.handleMatch();
-      }
+      if (el) this.evaluateTarget(el);
     } catch { /* invalid selector */ }
   }
 
@@ -203,6 +216,42 @@ export default class BringToFrontPlugin extends Plugin {
     if (this.cachedKeywords.length === 0) return true;
     const text = (el.textContent || "").toLowerCase();
     return this.cachedKeywords.some((kw) => text.includes(kw));
+  }
+
+  private evaluateTarget(target: HTMLElement) {
+    // With no keywords, matchesKeywords is always true, so the deferred branch
+    // is only ever reached when a keyword filter is active (zero cost otherwise).
+    if (this.matchesKeywords(target)) {
+      this.handleMatch();
+    } else {
+      this.watchForDeferredText(target);
+    }
+  }
+
+  // A modal/notice matched the selector but its text isn't present yet — async
+  // onOpen, Notice.setMessage, or progressively-updated content. Watch only this
+  // element's subtree for a bounded window and re-check, rather than adding
+  // characterData to the global observer (which would fire on every keystroke).
+  private watchForDeferredText(target: HTMLElement) {
+    if (this.watchedTargets.has(target)) return;
+    this.watchedTargets.add(target);
+
+    const obs = new MutationObserver(() => {
+      if (this.matchesKeywords(target)) {
+        this.stopDeferred(obs);
+        this.handleMatch();
+      }
+    });
+    obs.observe(target, { childList: true, subtree: true, characterData: true });
+    const timer = activeWindow.setTimeout(() => this.stopDeferred(obs), DEFERRED_TEXT_WINDOW_MS);
+    this.deferredObservers.set(obs, timer);
+  }
+
+  private stopDeferred(obs: MutationObserver) {
+    obs.disconnect();
+    const timer = this.deferredObservers.get(obs);
+    if (timer !== undefined) activeWindow.clearTimeout(timer);
+    this.deferredObservers.delete(obs);
   }
 
   // --- Focus ---
@@ -276,8 +325,9 @@ export default class BringToFrontPlugin extends Plugin {
   private getLanguage(): "en" | "zh" {
     if (this.settings.language === "zh") return "zh";
     if (this.settings.language === "en") return "en";
-    const obsidianApp = this.app as ObsidianApp;
-    const obsidianLang = obsidianApp.vault?.config?.language;
+    // Obsidian stores the UI language in localStorage under "language" (a moment
+    // locale like "zh"/"zh-TW"); a standard web API, not a private app internal.
+    const obsidianLang = window.localStorage.getItem("language");
     const systemLang = navigator.language.toLowerCase();
     return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
   }

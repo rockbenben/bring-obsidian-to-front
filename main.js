@@ -100,6 +100,7 @@ var SCOPE_SELECTORS = {
   notice: ".notice",
   both: ".modal-container, .notice"
 };
+var DEFERRED_TEXT_WINDOW_MS = 3e3;
 var DEFAULT_SETTINGS = {
   keywords: "",
   watchScope: "both",
@@ -115,6 +116,8 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     this.observer = null;
     this.restartTimer = null;
     this.cachedKeywords = [];
+    this.deferredObservers = /* @__PURE__ */ new Map();
+    this.watchedTargets = /* @__PURE__ */ new WeakSet();
   }
   debug(msg) {
     if (this.settings?.debugMode) console.debug(`[Bring to Front] ${msg}`);
@@ -134,6 +137,15 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     this.observer = null;
     if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
     this.restartTimer = null;
+    this.clearDeferredObservers();
+  }
+  clearDeferredObservers() {
+    for (const [obs, timer] of this.deferredObservers) {
+      obs.disconnect();
+      activeWindow.clearTimeout(timer);
+    }
+    this.deferredObservers.clear();
+    this.watchedTargets = /* @__PURE__ */ new WeakSet();
   }
   // --- Detection ---
   getSelector() {
@@ -145,6 +157,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   setupDetection() {
     const selector = this.getSelector();
     this.observer = new MutationObserver((mutations) => {
+      if (this.cachedKeywords.length === 0 && document.hasFocus()) return;
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
           const node = mutation.addedNodes[i];
@@ -159,15 +172,8 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   }
   checkNode(node, selector) {
     try {
-      let target = null;
-      if (node.matches(selector)) {
-        target = node;
-      } else {
-        target = node.querySelector(selector);
-      }
-      if (target && this.matchesKeywords(target)) {
-        this.handleMatch();
-      }
+      const target = node.matches(selector) ? node : node.querySelector(selector);
+      if (target) this.evaluateTarget(target);
     } catch {
     }
   }
@@ -175,9 +181,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     if (this.isWindowFocused()) return;
     try {
       const el = activeDocument.querySelector(selector);
-      if (el && this.matchesKeywords(el)) {
-        this.handleMatch();
-      }
+      if (el) this.evaluateTarget(el);
     } catch {
     }
   }
@@ -188,6 +192,36 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     if (this.cachedKeywords.length === 0) return true;
     const text = (el.textContent || "").toLowerCase();
     return this.cachedKeywords.some((kw) => text.includes(kw));
+  }
+  evaluateTarget(target) {
+    if (this.matchesKeywords(target)) {
+      this.handleMatch();
+    } else {
+      this.watchForDeferredText(target);
+    }
+  }
+  // A modal/notice matched the selector but its text isn't present yet — async
+  // onOpen, Notice.setMessage, or progressively-updated content. Watch only this
+  // element's subtree for a bounded window and re-check, rather than adding
+  // characterData to the global observer (which would fire on every keystroke).
+  watchForDeferredText(target) {
+    if (this.watchedTargets.has(target)) return;
+    this.watchedTargets.add(target);
+    const obs = new MutationObserver(() => {
+      if (this.matchesKeywords(target)) {
+        this.stopDeferred(obs);
+        this.handleMatch();
+      }
+    });
+    obs.observe(target, { childList: true, subtree: true, characterData: true });
+    const timer = activeWindow.setTimeout(() => this.stopDeferred(obs), DEFERRED_TEXT_WINDOW_MS);
+    this.deferredObservers.set(obs, timer);
+  }
+  stopDeferred(obs) {
+    obs.disconnect();
+    const timer = this.deferredObservers.get(obs);
+    if (timer !== void 0) activeWindow.clearTimeout(timer);
+    this.deferredObservers.delete(obs);
   }
   // --- Focus ---
   handleMatch() {
@@ -252,8 +286,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   getLanguage() {
     if (this.settings.language === "zh") return "zh";
     if (this.settings.language === "en") return "en";
-    const obsidianApp = this.app;
-    const obsidianLang = obsidianApp.vault?.config?.language;
+    const obsidianLang = window.localStorage.getItem("language");
     const systemLang = navigator.language.toLowerCase();
     return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
   }
