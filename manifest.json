@@ -1,7 +1,7 @@
 {
   "id": "bring-to-front",
   "name": "Bring to Front",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "minAppVersion": "1.8.0",
   "description": "Automatically brings the window to front when modals or notices appear in the background.",
   "author": "rockbenben",
