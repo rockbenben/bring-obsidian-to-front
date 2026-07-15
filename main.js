@@ -135,14 +135,14 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   cleanup() {
     this.observer?.disconnect();
     this.observer = null;
-    if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
+    if (this.restartTimer) window.clearTimeout(this.restartTimer);
     this.restartTimer = null;
     this.clearDeferredObservers();
   }
   clearDeferredObservers() {
     for (const [obs, timer] of this.deferredObservers) {
       obs.disconnect();
-      activeWindow.clearTimeout(timer);
+      window.clearTimeout(timer);
     }
     this.deferredObservers.clear();
     this.watchedTargets = /* @__PURE__ */ new WeakSet();
@@ -214,13 +214,13 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
       }
     });
     obs.observe(target, { childList: true, subtree: true, characterData: true });
-    const timer = activeWindow.setTimeout(() => this.stopDeferred(obs), DEFERRED_TEXT_WINDOW_MS);
+    const timer = window.setTimeout(() => this.stopDeferred(obs), DEFERRED_TEXT_WINDOW_MS);
     this.deferredObservers.set(obs, timer);
   }
   stopDeferred(obs) {
     obs.disconnect();
     const timer = this.deferredObservers.get(obs);
-    if (timer !== void 0) activeWindow.clearTimeout(timer);
+    if (timer !== void 0) window.clearTimeout(timer);
     this.deferredObservers.delete(obs);
   }
   // --- Focus ---
@@ -254,7 +254,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
       if (!win.isVisible()) win.show();
       if (!win.isAlwaysOnTop()) {
         win.setAlwaysOnTop(true);
-        await new Promise((r) => activeWindow.setTimeout(r, 200));
+        await new Promise((r) => window.setTimeout(r, 200));
         win.setAlwaysOnTop(false);
       }
       win.focus();
@@ -286,7 +286,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   getLanguage() {
     if (this.settings.language === "zh") return "zh";
     if (this.settings.language === "en") return "en";
-    const obsidianLang = window.localStorage.getItem("language");
+    const obsidianLang = (0, import_obsidian.getLanguage)();
     const systemLang = navigator.language.toLowerCase();
     return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
   }
@@ -302,8 +302,8 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     this.updateKeywordCache();
   }
   restartDetection() {
-    if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
-    this.restartTimer = activeWindow.setTimeout(() => {
+    if (this.restartTimer) window.clearTimeout(this.restartTimer);
+    this.restartTimer = window.setTimeout(() => {
       this.restartTimer = null;
       this.cleanup();
       this.setupDetection();

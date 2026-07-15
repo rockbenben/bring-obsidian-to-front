@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, getLanguage as getObsidianLanguage } from "obsidian";
 
 // Electron interfaces
 interface ElectronWindow extends Window {
@@ -142,7 +142,7 @@ export default class BringToFrontPlugin extends Plugin {
   private cleanup() {
     this.observer?.disconnect();
     this.observer = null;
-    if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
+    if (this.restartTimer) window.clearTimeout(this.restartTimer);
     this.restartTimer = null;
     this.clearDeferredObservers();
   }
@@ -150,7 +150,7 @@ export default class BringToFrontPlugin extends Plugin {
   private clearDeferredObservers() {
     for (const [obs, timer] of this.deferredObservers) {
       obs.disconnect();
-      activeWindow.clearTimeout(timer);
+      window.clearTimeout(timer);
     }
     this.deferredObservers.clear();
     this.watchedTargets = new WeakSet();
@@ -178,6 +178,7 @@ export default class BringToFrontPlugin extends Plugin {
       // focused pop-out and would wrongly skip a notice firing in the background
       // main window. Cheap DOM read (no Electron IPC); a false negative only
       // forgoes the optimization, never changes behavior.
+      // eslint-disable-next-line -- intentional main-window `document`; see above
       if (this.cachedKeywords.length === 0 && document.hasFocus()) return;
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
@@ -243,14 +244,14 @@ export default class BringToFrontPlugin extends Plugin {
       }
     });
     obs.observe(target, { childList: true, subtree: true, characterData: true });
-    const timer = activeWindow.setTimeout(() => this.stopDeferred(obs), DEFERRED_TEXT_WINDOW_MS);
+    const timer = window.setTimeout(() => this.stopDeferred(obs), DEFERRED_TEXT_WINDOW_MS);
     this.deferredObservers.set(obs, timer);
   }
 
   private stopDeferred(obs: MutationObserver) {
     obs.disconnect();
     const timer = this.deferredObservers.get(obs);
-    if (timer !== undefined) activeWindow.clearTimeout(timer);
+    if (timer !== undefined) window.clearTimeout(timer);
     this.deferredObservers.delete(obs);
   }
 
@@ -291,7 +292,7 @@ export default class BringToFrontPlugin extends Plugin {
       if (!win.isVisible()) win.show();
       if (!win.isAlwaysOnTop()) {
         win.setAlwaysOnTop(true);
-        await new Promise((r) => activeWindow.setTimeout(r, 200));
+        await new Promise((r) => window.setTimeout(r, 200));
         win.setAlwaysOnTop(false);
       }
       win.focus();
@@ -325,9 +326,9 @@ export default class BringToFrontPlugin extends Plugin {
   private getLanguage(): "en" | "zh" {
     if (this.settings.language === "zh") return "zh";
     if (this.settings.language === "en") return "en";
-    // Obsidian stores the UI language in localStorage under "language" (a moment
-    // locale like "zh"/"zh-TW"); a standard web API, not a private app internal.
-    const obsidianLang = window.localStorage.getItem("language");
+    // Obsidian's official getLanguage() returns the UI language (a moment locale
+    // like "zh"/"zh-TW"). Requires app 1.8.0+ (see manifest minAppVersion).
+    const obsidianLang = getObsidianLanguage();
     const systemLang = navigator.language.toLowerCase();
     return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
   }
@@ -348,8 +349,8 @@ export default class BringToFrontPlugin extends Plugin {
 
   restartDetection() {
     // Debounce: settings onChange fires on every keystroke
-    if (this.restartTimer) activeWindow.clearTimeout(this.restartTimer);
-    this.restartTimer = activeWindow.setTimeout(() => {
+    if (this.restartTimer) window.clearTimeout(this.restartTimer);
+    this.restartTimer = window.setTimeout(() => {
       this.restartTimer = null;
       this.cleanup();
       this.setupDetection();
