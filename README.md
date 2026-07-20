@@ -67,7 +67,14 @@ Open **Settings → Community plugins → Bring to Front**. The defaults work we
 | Watch scope      | What to watch: Modals (dialogs), Notices (toasts), both, or a custom CSS selector                    | Modals & notices |
 | CSS selector     | Your own selector (shown only when Watch scope = Custom)                                              | Empty            |
 | Focus cooldown   | Minimum seconds between two bring-to-front actions, so it doesn't interrupt repeatedly. 0 = no cooldown | 5 seconds        |
+| Quiet hours      | Stay out of the way during a time range you choose. Ranges may span midnight.                         | Off (22:00–08:00) |
 | Debug mode       | Print match details to the console (Ctrl+Shift+I)                                                     | Off              |
+
+### Quiet hours
+
+Turn this on and pick a start and end time to stop the window from jumping in front of you at night. **Nothing is suppressed except the window raise** — modals and notices still appear in Obsidian exactly as usual, so anything that arrives during quiet hours is waiting for you when you switch back.
+
+Ranges that cross midnight work as you'd expect: `22:00`–`08:00` covers the whole night. The start time counts as inside the range and the end time as outside, so `22:00`–`08:00` and `08:00`–`22:00` divide the day with no overlap and no gap.
 
 ### Filtering examples (optional)
 
@@ -89,6 +96,7 @@ Bring to Front watches the Obsidian window for new popups and notices. When one 
 | Problem                  | Try this                                                                                  |
 | ------------------------ | ----------------------------------------------------------------------------------------- |
 | Pops up too often        | Increase **Focus cooldown**, or add **Keywords** to narrow what triggers it.              |
+| Interrupts at night      | Turn on **Quiet hours** and set a range such as 22:00–08:00.                              |
 | Doesn't pop up           | Make sure Obsidian is actually in the background; clear **Keywords** and set **Watch scope** to "Both"; confirm the popup text matches your keywords. |
 | Want to see what happens | Enable **Debug mode**, open the console (Ctrl+Shift+I), and watch for `[Bring to Front]` messages. |
 

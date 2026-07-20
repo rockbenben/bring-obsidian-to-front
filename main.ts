@@ -29,9 +29,10 @@ type TranslationKey =
   | "scopeModal" | "scopeNotice" | "scopeBoth" | "scopeCustom"
   | "customSelector" | "customSelectorDesc"
   | "focusInterval" | "focusIntervalDesc"
+  | "quietHours" | "quietHoursDesc" | "quietStart" | "quietEnd"
   | "debugMode" | "debugModeDesc"
-  | "matchDetected" | "windowFocused" | "cooldownActive"
-  | "guide" | "guideKeywords" | "guideScope" | "guideExamples"
+  | "matchDetected" | "windowFocused" | "cooldownActive" | "quietActive"
+  | "guide" | "guideKeywords" | "guideScope" | "guideQuiet" | "guideExamples"
   | "guideEx1" | "guideEx2" | "guideEx3" | "guideTip";
 
 type TranslationRecord = Record<TranslationKey, string>;
@@ -45,13 +46,17 @@ const translations: { en: TranslationRecord; zh: TranslationRecord } = {
     scopeModal: "Modals", scopeNotice: "Notices", scopeBoth: "Modals & notices", scopeCustom: "Custom selector",
     customSelector: "CSS selector", customSelectorDesc: "Custom CSS selector (e.g. .modal-container, [data-type=\"my-plugin\"])",
     focusInterval: "Focus cooldown (seconds)", focusIntervalDesc: "Minimum time between focus actions. Prevents repeated focus stealing. 0 = no cooldown",
+    quietHours: "Quiet hours", quietHoursDesc: "Do not bring the window to front during this time range.",
+    quietStart: "Start time", quietEnd: "End time",
     debugMode: "Debug mode", debugModeDesc: "Log matching details to console (Ctrl+Shift+I)",
     matchDetected: "Match detected, bringing to front",
     windowFocused: "Window already focused, skipping",
     cooldownActive: "Cooldown active, skipping",
+    quietActive: "Quiet hours active, skipping",
     guide: "Quick start guide",
     guideKeywords: "By default (no keywords), Obsidian is brought to front whenever a modal or notice appears while it is in the background. Add comma-separated keywords to only trigger when any keyword appears in the element text.",
     guideScope: "Watch scope: \"Modals\" watches popup dialogs, \"Notices\" watches toast messages, \"Both\" watches everything. Use \"Custom\" for advanced CSS selectors.",
+    guideQuiet: "Quiet hours: inside the range you set, modals and notices still appear as usual — only the bring-to-front is suppressed, so nothing is missed. Ranges that span midnight, such as 22:00 to 08:00, work as expected.",
     guideExamples: "Examples",
     guideEx1: "Reminder popup → keywords \"snooze, done\", scope \"Modals\"",
     guideEx2: "Error alerts → keywords \"error, failed\", scope \"Notices\"",
@@ -66,13 +71,17 @@ const translations: { en: TranslationRecord; zh: TranslationRecord } = {
     scopeModal: "弹窗", scopeNotice: "通知", scopeBoth: "弹窗和通知", scopeCustom: "自定义选择器",
     customSelector: "CSS 选择器", customSelectorDesc: "自定义 CSS 选择器（如 .modal-container、[data-type=\"my-plugin\"]）",
     focusInterval: "聚焦冷却（秒）", focusIntervalDesc: "两次置顶之间的最小间隔，防止反复抢焦。0 = 不限制",
+    quietHours: "静默时段", quietHoursDesc: "该时间段内不把窗口置顶。",
+    quietStart: "开始时间", quietEnd: "结束时间",
     debugMode: "调试模式", debugModeDesc: "在控制台（Ctrl+Shift+I）输出匹配日志",
     matchDetected: "检测到匹配，正在置顶",
     windowFocused: "窗口已在前台，跳过",
     cooldownActive: "冷却中，跳过",
+    quietActive: "处于静默时段，跳过",
     guide: "入门指南",
     guideKeywords: "默认无需配置：后台出现弹窗或通知时自动置顶。如需过滤，填入逗号分隔的关键词，出现任一关键词即触发。",
     guideScope: "监听范围：「弹窗」监听对话框弹窗，「通知」监听右上角提示消息，「弹窗和通知」同时监听两者。需要更灵活的匹配请选「自定义」输入 CSS 选择器。",
+    guideQuiet: "静默时段：设定的时段内，弹窗和通知照常出现，只是不再抢占前台，不会遗漏任何内容。支持 22:00 到 08:00 这类跨午夜的时段。",
     guideExamples: "配置示例",
     guideEx1: "提醒弹窗 → 关键词 \"snooze, done\"，范围「弹窗」",
     guideEx2: "错误提示 → 关键词 \"error, failed\"，范围「通知」",
@@ -88,6 +97,9 @@ interface BringToFrontSettings {
   watchScope: "modal" | "notice" | "both" | "custom";
   customSelector: string;
   focusInterval: number;
+  quietHoursEnabled: boolean;
+  quietStart: string;
+  quietEnd: string;
   language: "auto" | "zh" | "en";
   debugMode: boolean;
 }
@@ -107,9 +119,36 @@ const DEFAULT_SETTINGS: BringToFrontSettings = {
   watchScope: "both",
   customSelector: "",
   focusInterval: 5,
+  quietHoursEnabled: false,
+  quietStart: "22:00",
+  quietEnd: "08:00",
   language: "auto",
   debugMode: false,
 };
+
+// --- Quiet hours ---
+
+// "HH:MM" → minutes since midnight, or null when unparseable. An empty input
+// (the user cleared the time field) lands here and disables quiet hours rather
+// than silencing indefinitely — missing a bring-to-front is recoverable,
+// silencing forever looks like the plugin is broken.
+function parseTimeToMinutes(value: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!m) return null;
+  const hours = Number(m[1]);
+  const minutes = Number(m[2]);
+  if (hours > 23 || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
+
+// Half-open interval [start, end), so adjacent ranges (22:00–08:00 followed by
+// 08:00–22:00) neither overlap nor drop a minute. start > end spans midnight.
+// Pure and clock-free so it stays testable if a test runner is ever added.
+export function isWithinRange(nowMin: number, startMin: number, endMin: number): boolean {
+  if (startMin === endMin) return false;
+  if (startMin < endMin) return nowMin >= startMin && nowMin < endMin;
+  return nowMin >= startMin || nowMin < endMin;
+}
 
 // --- Plugin ---
 
@@ -169,6 +208,9 @@ export default class BringToFrontPlugin extends Plugin {
     const selector = this.getSelector();
 
     this.observer = new MutationObserver((mutations) => {
+      // Quiet hours: nothing below can lead to a bring-to-front, so skip the
+      // scan entirely and don't attach deferred watchers either.
+      if (this.isSilenced()) return;
       // Hot path: editor churn (the bulk of DOM mutations) happens while the
       // window is focused, and a focused window can never trigger a bring-to-
       // front (handleMatch no-ops). With no keyword filter there are also no
@@ -257,7 +299,25 @@ export default class BringToFrontPlugin extends Plugin {
 
   // --- Focus ---
 
+  // Checked on the MutationObserver hot path, so bail on the boolean before
+  // reading the clock — the default (disabled) must cost nothing per mutation.
+  private isSilenced(): boolean {
+    if (!this.settings.quietHoursEnabled) return false;
+    const start = parseTimeToMinutes(this.settings.quietStart);
+    const end = parseTimeToMinutes(this.settings.quietEnd);
+    if (start === null || end === null) return false;
+    const now = new Date();
+    return isWithinRange(now.getHours() * 60 + now.getMinutes(), start, end);
+  }
+
   private handleMatch() {
+    // Before isWindowFocused (a pure integer compare vs. an Electron IPC call)
+    // and before the cooldown, so a silenced match doesn't spend the cooldown.
+    if (this.isSilenced()) {
+      this.debug(this.t("quietActive"));
+      return;
+    }
+
     if (this.isWindowFocused()) {
       this.debug(this.t("windowFocused"));
       return;
@@ -413,6 +473,28 @@ class BringToFrontSettingTab extends PluginSettingTab {
         tx.inputEl.type = "number"; tx.inputEl.min = "0"; tx.inputEl.step = "1";
       });
 
+    // Quiet hours
+    new Setting(containerEl).setName(t("quietHours")).setDesc(t("quietHoursDesc"))
+      .addToggle((tg) => tg.setValue(this.plugin.settings.quietHoursEnabled)
+        .onChange(async (v) => { this.plugin.settings.quietHoursEnabled = v; await this.plugin.saveSettings(); this.display(); }));
+
+    // Start / end time (only when quiet hours are enabled)
+    if (this.plugin.settings.quietHoursEnabled) {
+      new Setting(containerEl).setName(t("quietStart"))
+        .addText((tx) => {
+          tx.setValue(this.plugin.settings.quietStart)
+            .onChange(async (v) => { this.plugin.settings.quietStart = v; await this.plugin.saveSettings(); });
+          tx.inputEl.type = "time";
+        });
+
+      new Setting(containerEl).setName(t("quietEnd"))
+        .addText((tx) => {
+          tx.setValue(this.plugin.settings.quietEnd)
+            .onChange(async (v) => { this.plugin.settings.quietEnd = v; await this.plugin.saveSettings(); });
+          tx.inputEl.type = "time";
+        });
+    }
+
     // Debug
     new Setting(containerEl).setName(t("debugMode")).setDesc(t("debugModeDesc"))
       .addToggle((tg) => tg.setValue(this.plugin.settings.debugMode).onChange(async (v) => { this.plugin.settings.debugMode = v; await this.plugin.saveSettings(); }));
@@ -423,6 +505,7 @@ class BringToFrontSettingTab extends PluginSettingTab {
     const gc = guide.createDiv();
     gc.createEl("p", { text: t("guideKeywords") });
     gc.createEl("p", { text: t("guideScope") });
+    gc.createEl("p", { text: t("guideQuiet") });
     new Setting(gc).setName(t("guideExamples")).setHeading();
     const ul = gc.createEl("ul");
     ul.createEl("li", { text: t("guideEx1") });
