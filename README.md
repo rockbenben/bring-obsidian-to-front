@@ -1,9 +1,12 @@
 # Bring to Front
 
+> Automatically bring the Obsidian window to the front when a popup or notice appears
+
+**English** · [简体中文](README.zh.md)
+
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rockbenben/bring-obsidian-to-front?style=for-the-badge&sort=semver)](https://github.com/rockbenben/bring-obsidian-to-front/releases/latest)
 [![GitHub License](https://img.shields.io/github/license/rockbenben/bring-obsidian-to-front?style=for-the-badge)](LICENSE)
-
-English | [中文](README_zh.md)
+[![365 Open Source Plan #005](https://img.shields.io/badge/365%20Open%20Source%20Plan-%23005-1f6feb)](https://github.com/rockbenben/365opensource)
 
 ## What it does
 
@@ -11,7 +14,7 @@ When Obsidian is running in the background and a popup or notice appears, Bring 
 
 **It works the moment you enable it — no setup, no keywords, nothing to configure.** If you want, you can later filter what triggers it (see [Settings](#settings-all-optional)).
 
-> **Desktop only** (Windows / macOS / Linux). It uses Electron window APIs and does not run on mobile.
+> **Desktop only** (Windows / macOS / Linux). It uses Electron window APIs and does not run on mobile. Requires Obsidian **1.8.7** or newer.
 
 ![demo](demo.gif)
 
@@ -107,8 +110,13 @@ git clone https://github.com/rockbenben/bring-obsidian-to-front.git
 cd bring-obsidian-to-front
 npm install
 npm run dev    # watch build
-npm run build  # production build
+npm run lint   # same rules the Obsidian plugin review bot runs
+npm run build  # type-check + lint + production build
 ```
+
+## About the 365 Open Source Plan
+
+Project **#005** of the [365 Open Source Plan](https://github.com/rockbenben/365opensource) — one person + AI, 300+ open-source projects in a year. [Submit your idea →](https://365.aishort.top/)
 
 ## License
 

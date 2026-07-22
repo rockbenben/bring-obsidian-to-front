@@ -1,9 +1,12 @@
 # Bring to Front
 
+> 弹窗或通知出现时，自动把 Obsidian 窗口置顶，别让提醒被埋在后台
+
+[English](README.md) · **简体中文**
+
 [![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/rockbenben/bring-obsidian-to-front?style=for-the-badge&sort=semver)](https://github.com/rockbenben/bring-obsidian-to-front/releases/latest)
 [![GitHub License](https://img.shields.io/github/license/rockbenben/bring-obsidian-to-front?style=for-the-badge)](LICENSE)
-
-[English](README.md) | 中文
+[![365 开源计划 #005](https://img.shields.io/badge/365%20%E5%BC%80%E6%BA%90%E8%AE%A1%E5%88%92-%23005-1f6feb)](https://github.com/rockbenben/365opensource)
 
 ## 它能做什么
 
@@ -11,7 +14,7 @@
 
 **启用即用——无需设置、无需关键词、不用配置任何东西。** 如果愿意,之后也可以过滤只在特定内容上触发(见[设置](#设置全部可选))。
 
-> **仅桌面端**(Windows / macOS / Linux),依赖 Electron 窗口 API,移动端无法使用。
+> **仅桌面端**(Windows / macOS / Linux),依赖 Electron 窗口 API,移动端无法使用。需要 Obsidian **1.8.7** 或更高版本。
 
 ![demo](demo.gif)
 
@@ -107,8 +110,13 @@ git clone https://github.com/rockbenben/bring-obsidian-to-front.git
 cd bring-obsidian-to-front
 npm install
 npm run dev    # 监听构建
-npm run build  # 生产构建
+npm run lint   # 官方插件审核 bot 使用的同一套规则
+npm run build  # 类型检查 + lint + 生产构建
 ```
+
+## 关于 365 开源计划
+
+[365 开源计划](https://github.com/rockbenben/365opensource) 的第 **#005** 个项目——一个人 + AI，一年 300+ 个开源项目。[提交你的需求 →](https://365.aishort.top/)
 
 ## 许可证
 
