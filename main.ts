@@ -215,13 +215,13 @@ export default class BringToFrontPlugin extends Plugin {
       // window is focused, and a focused window can never trigger a bring-to-
       // front (handleMatch no-ops). With no keyword filter there are also no
       // deferred watchers to attach — so the whole scan is wasted work. Skip it.
-      // Gate on document.hasFocus() — the main renderer window, the same window
-      // handleMatch/bringToFront act on — NOT activeDocument, which points at a
-      // focused pop-out and would wrongly skip a notice firing in the background
-      // main window. Cheap DOM read (no Electron IPC); a false negative only
-      // forgoes the optimization, never changes behavior.
-      // eslint-disable-next-line -- intentional main-window `document`; see above
-      if (this.cachedKeywords.length === 0 && document.hasFocus()) return;
+      // Gate on the main renderer window's focus — the same window
+      // handleMatch/bringToFront act on. Read via workspace.rootSplit.doc
+      // rather than activeDocument, which points at a focused pop-out and would
+      // wrongly skip a notice firing in the background main window. Cheap DOM
+      // read (no Electron IPC); a false negative only forgoes the optimization,
+      // never changes behavior.
+      if (this.cachedKeywords.length === 0 && this.app.workspace.rootSplit.doc.hasFocus()) return;
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
           const node = mutation.addedNodes[i];
@@ -387,7 +387,7 @@ export default class BringToFrontPlugin extends Plugin {
     if (this.settings.language === "zh") return "zh";
     if (this.settings.language === "en") return "en";
     // Obsidian's official getLanguage() returns the UI language (a moment locale
-    // like "zh"/"zh-TW"). Requires app 1.8.0+ (see manifest minAppVersion).
+    // like "zh"/"zh-TW"). Requires app 1.8.7+ (see manifest minAppVersion).
     const obsidianLang = getObsidianLanguage();
     const systemLang = navigator.language.toLowerCase();
     return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";

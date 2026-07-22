@@ -187,7 +187,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     const selector = this.getSelector();
     this.observer = new MutationObserver((mutations) => {
       if (this.isSilenced()) return;
-      if (this.cachedKeywords.length === 0 && document.hasFocus()) return;
+      if (this.cachedKeywords.length === 0 && this.app.workspace.rootSplit.doc.hasFocus()) return;
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
           const node = mutation.addedNodes[i];
