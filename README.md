@@ -10,13 +10,13 @@
 
 ## What it does
 
-When Obsidian is running in the background and a popup or notice appears, Bring to Front automatically pulls the Obsidian window to the foreground so you don't miss it.
+Obsidian's reminders, sync warnings and plugin notices all appear inside its own window. If you're working in a browser or an editor at the time, they come and go without you ever seeing them — Obsidian has no way to get your attention. This plugin gives it one.
 
 **It works the moment you enable it — no setup, no keywords, nothing to configure.** If you want, you can later filter what triggers it (see [Settings](#settings-all-optional)).
 
 > **Desktop only** (Windows / macOS / Linux). It uses Electron window APIs and does not run on mobile. Requires Obsidian **1.8.7** or newer.
 
-![demo](demo.gif)
+![Obsidian sitting in the background, then jumping to the front the moment a notice fires](demo.gif)
 
 ## Installation
 
@@ -41,7 +41,7 @@ Or open the [community plugin page](https://community.obsidian.md/plugins/bring-
 
 ## Usage
 
-There's nothing to set up — once enabled, it just works. Whenever Obsidian is in the background and a popup (modal) or notice appears, the window jumps to the front. When the window is already focused, it does nothing.
+There's nothing to set up — once enabled, it just works. Worth knowing: when the window already has focus it does nothing, so it never steals focus from itself while you're typing.
 
 ### Example: never miss a reminder
 
@@ -114,10 +114,10 @@ npm run lint   # same rules the Obsidian plugin review bot runs
 npm run build  # type-check + lint + production build
 ```
 
+## Contributing
+
+Issues and suggestions are welcome on [GitHub](https://github.com/rockbenben/bring-obsidian-to-front/issues).
+
 ## About the 365 Open Source Plan
 
-Project **#005** of the [365 Open Source Plan](https://github.com/rockbenben/365opensource) — one person + AI, 300+ open-source projects in a year. [Submit your idea →](https://365.aishort.top/)
-
-## License
-
-MIT — see [LICENSE](LICENSE). Issues and suggestions are welcome on [GitHub](https://github.com/rockbenben/bring-obsidian-to-front/issues).
+Project **#005** of the [365 Open Source Plan](https://github.com/rockbenben/365opensource) — one person + AI, 300+ open-source projects in a year. [Submit your idea →](https://365.aishort.top/) · [Discord](https://discord.gg/PZTQfJ4GjX) · [Telegram](https://t.me/aishort_top)
