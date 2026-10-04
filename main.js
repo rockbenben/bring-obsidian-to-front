@@ -26,86 +26,97 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var main_exports = {};
 __export(main_exports, {
   default: () => BringToFrontPlugin,
+  isValidSelector: () => isValidSelector,
   isWithinRange: () => isWithinRange
 });
 module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var translations = {
   en: {
-    language: "Language",
-    languageDesc: "Display language",
-    auto: "Auto",
+    introTitle: "Works out of the box",
+    introDesc: "A dialog or notification that appears while Obsidian is in the background brings the window to the front.",
+    enabled: "Enabled",
+    enabledDesc: "Turn the raising off without losing your settings.",
+    language: "Plugin language",
+    languageDesc: "Change the language of these settings.",
+    auto: "Follow Obsidian",
     chinese: "\u4E2D\u6587",
     english: "English",
     keywords: "Keywords (optional)",
-    keywordsDesc: "Leave empty to bring to front on any modal/notice when Obsidian is in the background. Add comma-separated keywords to trigger when any one of them appears.",
-    watchScope: "Watch scope",
-    watchScopeDesc: "Which elements to monitor",
-    scopeModal: "Modals",
-    scopeNotice: "Notices",
-    scopeBoth: "Modals & notices",
+    keywordsDesc: "Empty = any pop-up. Or list comma-separated words to react only to those.",
+    watchScope: "Watch for",
+    watchScopeDesc: "Which kind of pop-up to react to",
+    scopeModal: "Dialogs",
+    scopeNotice: "Notifications",
+    scopeBoth: "Dialogs & notifications",
     scopeCustom: "Custom selector",
-    customSelector: "CSS selector",
-    customSelectorDesc: 'Custom CSS selector (e.g. .modal-container, [data-type="my-plugin"])',
-    focusInterval: "Focus cooldown (seconds)",
-    focusIntervalDesc: "Minimum time between focus actions. Prevents repeated focus stealing. 0 = no cooldown",
+    customSelector: "Selector",
+    customSelectorDesc: "Advanced: match any element you name. Empty = dialogs and notifications.",
+    selectorInvalid: "That selector doesn't parse, so it isn't used.",
+    focusInterval: "Cooldown (seconds)",
+    focusIntervalDesc: "Shortest wait between two raises. 0 = no wait.",
+    secondsInvalid: "Enter a whole number of seconds, 0 or more.",
     quietHours: "Quiet hours",
-    quietHoursDesc: "Do not bring the window to front during this time range.",
-    quietStart: "Start time",
-    quietEnd: "End time",
+    quietHoursDesc: "No raising during these hours. Pop-ups still appear.",
+    quietRange: "Time range",
+    quietStart: "From",
+    quietEnd: "To",
+    quietUnset: "Both times are needed. Quiet hours stay off until they are set.",
+    quietSame: "Start and end are the same time, so nothing is silenced.",
     debugMode: "Debug mode",
-    debugModeDesc: "Log matching details to console (Ctrl+Shift+I)",
-    matchDetected: "Match detected, bringing to front",
-    windowFocused: "Window already focused, skipping",
-    cooldownActive: "Cooldown active, skipping",
-    quietActive: "Quiet hours active, skipping",
+    debugModeDesc: "Record what was detected in the developer console (Ctrl+Shift+I).",
     guide: "Quick start guide",
-    guideKeywords: "By default (no keywords), Obsidian is brought to front whenever a modal or notice appears while it is in the background. Add comma-separated keywords to only trigger when any keyword appears in the element text.",
-    guideScope: 'Watch scope: "Modals" watches popup dialogs, "Notices" watches toast messages, "Both" watches everything. Use "Custom" for advanced CSS selectors.',
-    guideQuiet: "Quiet hours: inside the range you set, modals and notices still appear as usual \u2014 only the bring-to-front is suppressed, so nothing is missed. Ranges that span midnight, such as 22:00 to 08:00, work as expected.",
+    guideKeywords: "With no keywords, Obsidian comes forward whenever a dialog or notification appears while it is in the background. Add keywords to narrow that down.",
+    guideScope: '"Dialogs" are the windows that block the page, "Notifications" are the small messages in the corner. "Custom selector" is for advanced matching.',
+    guideQuiet: "During quiet hours nothing is hidden: pop-ups still appear inside Obsidian, the window simply stays where it is. Ranges may cross midnight, such as 22:00 to 08:00.",
     guideExamples: "Examples",
-    guideEx1: 'Reminder popup \u2192 keywords "snooze, done", scope "Modals"',
-    guideEx2: 'Error alerts \u2192 keywords "error, failed", scope "Notices"',
-    guideEx3: 'All modals & notices \u2192 leave keywords empty, scope "Both" (default)',
-    guideTip: "Tip: To find a CSS selector \u2014 open DevTools (Ctrl+Shift+I), click the inspect icon (top-left of DevTools panel), click the target element, then use the class names shown in the Elements panel (e.g. .my-plugin-modal)."
+    guideEx1: 'Reminder dialogs \u2192 keywords "snooze, done", watch for "Dialogs"',
+    guideEx2: 'Sync errors \u2192 keywords "error, failed", watch for "Notifications"',
+    guideEx3: 'Everything \u2192 leave keywords empty, watch for "Dialogs & notifications" (default)',
+    guideTip: "To find a selector: open the developer console (Ctrl+Shift+I), pick the inspect tool, click the element, and read its class name."
   },
   zh: {
-    language: "\u8BED\u8A00",
-    languageDesc: "\u663E\u793A\u8BED\u8A00",
-    auto: "\u81EA\u52A8",
+    introTitle: "\u5F00\u7BB1\u5373\u7528",
+    introDesc: "Obsidian \u5728\u540E\u53F0\u65F6\u51FA\u73B0\u5F39\u7A97\u6216\u901A\u77E5\uFF0C\u5C31\u628A\u7A97\u53E3\u5E26\u5230\u6700\u524D\u9762\u3002",
+    enabled: "\u5DF2\u542F\u7528",
+    enabledDesc: "\u5173\u6389\u540E\u4E0D\u518D\u7F6E\u9876\uFF0C\u8BBE\u7F6E\u4F1A\u4FDD\u7559\u3002",
+    language: "\u63D2\u4EF6\u8BED\u8A00",
+    languageDesc: "\u66F4\u6539\u8FD9\u4E9B\u8BBE\u7F6E\u9879\u7684\u663E\u793A\u8BED\u8A00\u3002",
+    auto: "\u8DDF\u968F Obsidian",
     chinese: "\u4E2D\u6587",
     english: "English",
     keywords: "\u5173\u952E\u8BCD\uFF08\u53EF\u9009\uFF09",
-    keywordsDesc: "\u7559\u7A7A\u5373\u53EF\uFF1A\u540E\u53F0\u51FA\u73B0\u5F39\u7A97\u6216\u901A\u77E5\u65F6\u81EA\u52A8\u7F6E\u9876\u3002\u586B\u5199\u9017\u53F7\u5206\u9694\u7684\u5173\u952E\u8BCD\uFF0C\u51FA\u73B0\u4EFB\u4E00\u5373\u89E6\u53D1\u3002",
-    watchScope: "\u76D1\u542C\u8303\u56F4",
-    watchScopeDesc: "\u76D1\u542C\u54EA\u7C7B\u5143\u7D20",
+    keywordsDesc: "\u7559\u7A7A = \u4EFB\u4F55\u5F39\u7A97\u90FD\u7F6E\u9876\uFF1B\u586B\u5199\u9017\u53F7\u5206\u9694\u7684\u8BCD\u8BED\uFF0C\u53EA\u5339\u914D\u5305\u542B\u5B83\u4EEC\u7684\u5F39\u7A97\u3002",
+    watchScope: "\u76D1\u542C\u5BF9\u8C61",
+    watchScopeDesc: "\u5BF9\u54EA\u7C7B\u5F39\u7A97\u505A\u51FA\u53CD\u5E94",
     scopeModal: "\u5F39\u7A97",
     scopeNotice: "\u901A\u77E5",
     scopeBoth: "\u5F39\u7A97\u548C\u901A\u77E5",
     scopeCustom: "\u81EA\u5B9A\u4E49\u9009\u62E9\u5668",
-    customSelector: "CSS \u9009\u62E9\u5668",
-    customSelectorDesc: '\u81EA\u5B9A\u4E49 CSS \u9009\u62E9\u5668\uFF08\u5982 .modal-container\u3001[data-type="my-plugin"]\uFF09',
-    focusInterval: "\u805A\u7126\u51B7\u5374\uFF08\u79D2\uFF09",
-    focusIntervalDesc: "\u4E24\u6B21\u7F6E\u9876\u4E4B\u95F4\u7684\u6700\u5C0F\u95F4\u9694\uFF0C\u9632\u6B62\u53CD\u590D\u62A2\u7126\u30020 = \u4E0D\u9650\u5236",
+    customSelector: "\u9009\u62E9\u5668",
+    customSelectorDesc: "\u9AD8\u7EA7\u7528\u6CD5\uFF1A\u5339\u914D\u4F60\u6307\u5B9A\u7684\u4EFB\u610F\u5143\u7D20\u3002\u7559\u7A7A = \u5F39\u7A97\u548C\u901A\u77E5\u3002",
+    selectorInvalid: "\u8FD9\u4E2A\u9009\u62E9\u5668\u65E0\u6CD5\u89E3\u6790\uFF0C\u4E0D\u4F1A\u751F\u6548\u3002",
+    focusInterval: "\u51B7\u5374\u65F6\u95F4\uFF08\u79D2\uFF09",
+    focusIntervalDesc: "\u4E24\u6B21\u7F6E\u9876\u4E4B\u95F4\u7684\u6700\u77ED\u95F4\u9694\u30020 = \u4E0D\u9650\u5236\u3002",
+    secondsInvalid: "\u8BF7\u8F93\u5165 0 \u6216\u66F4\u5927\u7684\u6574\u6570\u79D2\u3002",
     quietHours: "\u9759\u9ED8\u65F6\u6BB5",
-    quietHoursDesc: "\u8BE5\u65F6\u95F4\u6BB5\u5185\u4E0D\u628A\u7A97\u53E3\u7F6E\u9876\u3002",
-    quietStart: "\u5F00\u59CB\u65F6\u95F4",
-    quietEnd: "\u7ED3\u675F\u65F6\u95F4",
+    quietHoursDesc: "\u8FD9\u6BB5\u65F6\u95F4\u5185\u4E0D\u7F6E\u9876\u7A97\u53E3\uFF0C\u5F39\u7A97\u7167\u5E38\u51FA\u73B0\u3002",
+    quietRange: "\u8D77\u6B62\u65F6\u95F4",
+    quietStart: "\u5F00\u59CB",
+    quietEnd: "\u7ED3\u675F",
+    quietUnset: "\u4E24\u4E2A\u65F6\u95F4\u90FD\u8981\u586B\uFF0C\u9759\u9ED8\u65F6\u6BB5\u624D\u4F1A\u751F\u6548\u3002",
+    quietSame: "\u5F00\u59CB\u4E0E\u7ED3\u675F\u76F8\u540C\uFF0C\u4E0D\u4F1A\u9759\u9ED8\u3002",
     debugMode: "\u8C03\u8BD5\u6A21\u5F0F",
-    debugModeDesc: "\u5728\u63A7\u5236\u53F0\uFF08Ctrl+Shift+I\uFF09\u8F93\u51FA\u5339\u914D\u65E5\u5FD7",
-    matchDetected: "\u68C0\u6D4B\u5230\u5339\u914D\uFF0C\u6B63\u5728\u7F6E\u9876",
-    windowFocused: "\u7A97\u53E3\u5DF2\u5728\u524D\u53F0\uFF0C\u8DF3\u8FC7",
-    cooldownActive: "\u51B7\u5374\u4E2D\uFF0C\u8DF3\u8FC7",
-    quietActive: "\u5904\u4E8E\u9759\u9ED8\u65F6\u6BB5\uFF0C\u8DF3\u8FC7",
+    debugModeDesc: "\u5728\u5F00\u53D1\u8005\u63A7\u5236\u53F0\uFF08Ctrl+Shift+I\uFF09\u8BB0\u5F55\u68C0\u6D4B\u5230\u7684\u5185\u5BB9\u3002",
     guide: "\u5165\u95E8\u6307\u5357",
-    guideKeywords: "\u9ED8\u8BA4\u65E0\u9700\u914D\u7F6E\uFF1A\u540E\u53F0\u51FA\u73B0\u5F39\u7A97\u6216\u901A\u77E5\u65F6\u81EA\u52A8\u7F6E\u9876\u3002\u5982\u9700\u8FC7\u6EE4\uFF0C\u586B\u5165\u9017\u53F7\u5206\u9694\u7684\u5173\u952E\u8BCD\uFF0C\u51FA\u73B0\u4EFB\u4E00\u5173\u952E\u8BCD\u5373\u89E6\u53D1\u3002",
-    guideScope: "\u76D1\u542C\u8303\u56F4\uFF1A\u300C\u5F39\u7A97\u300D\u76D1\u542C\u5BF9\u8BDD\u6846\u5F39\u7A97\uFF0C\u300C\u901A\u77E5\u300D\u76D1\u542C\u53F3\u4E0A\u89D2\u63D0\u793A\u6D88\u606F\uFF0C\u300C\u5F39\u7A97\u548C\u901A\u77E5\u300D\u540C\u65F6\u76D1\u542C\u4E24\u8005\u3002\u9700\u8981\u66F4\u7075\u6D3B\u7684\u5339\u914D\u8BF7\u9009\u300C\u81EA\u5B9A\u4E49\u300D\u8F93\u5165 CSS \u9009\u62E9\u5668\u3002",
-    guideQuiet: "\u9759\u9ED8\u65F6\u6BB5\uFF1A\u8BBE\u5B9A\u7684\u65F6\u6BB5\u5185\uFF0C\u5F39\u7A97\u548C\u901A\u77E5\u7167\u5E38\u51FA\u73B0\uFF0C\u53EA\u662F\u4E0D\u518D\u62A2\u5360\u524D\u53F0\uFF0C\u4E0D\u4F1A\u9057\u6F0F\u4EFB\u4F55\u5185\u5BB9\u3002\u652F\u6301 22:00 \u5230 08:00 \u8FD9\u7C7B\u8DE8\u5348\u591C\u7684\u65F6\u6BB5\u3002",
+    guideKeywords: "\u4E0D\u8BBE\u5173\u952E\u8BCD\u65F6\uFF0C\u53EA\u8981 Obsidian \u5728\u540E\u53F0\u5F39\u51FA\u7A97\u53E3\u6216\u901A\u77E5\uFF0C\u5C31\u4F1A\u7F6E\u9876\u3002\u586B\u5165\u5173\u952E\u8BCD\u53EF\u4EE5\u7F29\u5C0F\u8303\u56F4\u3002",
+    guideScope: "\u300C\u5F39\u7A97\u300D\u6307\u6321\u4F4F\u9875\u9762\u7684\u5BF9\u8BDD\u6846\uFF0C\u300C\u901A\u77E5\u300D\u6307\u89D2\u843D\u91CC\u7684\u5C0F\u6D88\u606F\u6761\u3002\u9700\u8981\u66F4\u7075\u6D3B\u7684\u5339\u914D\u8BF7\u9009\u300C\u81EA\u5B9A\u4E49\u9009\u62E9\u5668\u300D\u3002",
+    guideQuiet: "\u9759\u9ED8\u65F6\u6BB5\u5185\u4E0D\u4F1A\u9690\u85CF\u4EFB\u4F55\u5185\u5BB9\uFF1A\u5F39\u7A97\u548C\u901A\u77E5\u7167\u5E38\u51FA\u73B0\uFF0C\u53EA\u662F\u7A97\u53E3\u4E0D\u518D\u8DF3\u5230\u6700\u524D\u9762\u3002\u65F6\u6BB5\u53EF\u4EE5\u8DE8\u5348\u591C\uFF0C\u4F8B\u5982 22:00 \u5230 08:00\u3002",
     guideExamples: "\u914D\u7F6E\u793A\u4F8B",
-    guideEx1: '\u63D0\u9192\u5F39\u7A97 \u2192 \u5173\u952E\u8BCD "snooze, done"\uFF0C\u8303\u56F4\u300C\u5F39\u7A97\u300D',
-    guideEx2: '\u9519\u8BEF\u63D0\u793A \u2192 \u5173\u952E\u8BCD "error, failed"\uFF0C\u8303\u56F4\u300C\u901A\u77E5\u300D',
-    guideEx3: "\u6240\u6709\u5F39\u7A97\u548C\u901A\u77E5 \u2192 \u5173\u952E\u8BCD\u7559\u7A7A\uFF0C\u8303\u56F4\u300C\u5F39\u7A97\u548C\u901A\u77E5\u300D\uFF08\u9ED8\u8BA4\uFF09",
-    guideTip: "\u63D0\u793A\uFF1A\u67E5\u627E CSS \u9009\u62E9\u5668\u2014\u2014\u6253\u5F00\u5F00\u53D1\u8005\u5DE5\u5177\uFF08Ctrl+Shift+I\uFF09\uFF0C\u70B9\u51FB\u5DE6\u4E0A\u89D2\u7684\u9009\u62E9\u5668\u56FE\u6807\uFF0C\u70B9\u51FB\u76EE\u6807\u5143\u7D20\uFF0C\u5728 Elements \u9762\u677F\u4E2D\u67E5\u770B class \u540D\u79F0\uFF08\u5982 .my-plugin-modal\uFF09\u3002"
+    guideEx1: "\u63D0\u9192\u5BF9\u8BDD\u6846 \u2192 \u5173\u952E\u8BCD\u300Csnooze, done\u300D\uFF0C\u76D1\u542C\u300C\u5F39\u7A97\u300D",
+    guideEx2: "\u540C\u6B65\u62A5\u9519 \u2192 \u5173\u952E\u8BCD\u300Cerror, failed\u300D\uFF0C\u76D1\u542C\u300C\u901A\u77E5\u300D",
+    guideEx3: "\u5168\u90E8 \u2192 \u5173\u952E\u8BCD\u7559\u7A7A\uFF0C\u76D1\u542C\u300C\u5F39\u7A97\u548C\u901A\u77E5\u300D\uFF08\u9ED8\u8BA4\uFF09",
+    guideTip: "\u67E5\u627E\u9009\u62E9\u5668\uFF1A\u6253\u5F00\u5F00\u53D1\u8005\u63A7\u5236\u53F0\uFF08Ctrl+Shift+I\uFF09\uFF0C\u7528\u68C0\u67E5\u5DE5\u5177\u70B9\u51FB\u76EE\u6807\u5143\u7D20\uFF0C\u8BFB\u53D6\u5B83\u7684 class \u540D\u79F0\u3002"
   }
 };
 var SCOPE_SELECTORS = {
@@ -115,6 +126,7 @@ var SCOPE_SELECTORS = {
 };
 var DEFERRED_TEXT_WINDOW_MS = 3e3;
 var DEFAULT_SETTINGS = {
+  enabled: true,
   keywords: "",
   watchScope: "both",
   customSelector: "",
@@ -138,6 +150,14 @@ function isWithinRange(nowMin, startMin, endMin) {
   if (startMin < endMin) return nowMin >= startMin && nowMin < endMin;
   return nowMin >= startMin || nowMin < endMin;
 }
+function isValidSelector(selector) {
+  try {
+    createFragment().querySelector(selector);
+    return true;
+  } catch {
+    return false;
+  }
+}
 var BringToFrontPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
@@ -155,7 +175,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     await this.loadSettings();
     this.updateTranslations();
     this.addSettingTab(new BringToFrontSettingTab(this.app, this));
-    this.setupDetection();
+    if (this.settings.enabled) this.setupDetection();
     this.debug("Plugin loaded");
   }
   onunload() {
@@ -179,7 +199,9 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   // --- Detection ---
   getSelector() {
     if (this.settings.watchScope === "custom") {
-      return this.settings.customSelector.trim() || SCOPE_SELECTORS.both;
+      const custom = this.settings.customSelector.trim();
+      if (custom && isValidSelector(custom)) return custom;
+      return SCOPE_SELECTORS.both;
     }
     return SCOPE_SELECTORS[this.settings.watchScope] || SCOPE_SELECTORS.both;
   }
@@ -264,24 +286,26 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     const now = /* @__PURE__ */ new Date();
     return isWithinRange(now.getHours() * 60 + now.getMinutes(), start, end);
   }
+  // Console output stays English on purpose: it is what users paste into issue
+  // reports, and a translated line cannot be matched against the docs.
   handleMatch() {
     if (this.isSilenced()) {
-      this.debug(this.t("quietActive"));
+      this.debug("quiet hours active, skipping");
       return;
     }
     if (this.isWindowFocused()) {
-      this.debug(this.t("windowFocused"));
+      this.debug("window already focused, skipping");
       return;
     }
     if (this.settings.focusInterval > 0) {
       const now = Date.now();
       if ((now - this.lastFocusTime) / 1e3 < this.settings.focusInterval) {
-        this.debug(this.t("cooldownActive"));
+        this.debug("cooldown active, skipping");
         return;
       }
       this.lastFocusTime = now;
     }
-    this.debug(this.t("matchDetected"));
+    this.debug("match detected, bringing to front");
     void this.bringToFront();
   }
   isWindowFocused() {
@@ -350,8 +374,16 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     this.restartTimer = window.setTimeout(() => {
       this.restartTimer = null;
       this.cleanup();
-      this.setupDetection();
+      if (this.settings.enabled) this.setupDetection();
     }, 300);
+  }
+  // The on/off switch acts immediately — waiting for a debounce would leave the
+  // window raisable for 300ms after the user asked it to stop.
+  async setEnabled(enabled) {
+    this.settings.enabled = enabled;
+    await this.saveSettings();
+    this.cleanup();
+    if (enabled) this.setupDetection();
   }
 };
 var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
@@ -363,6 +395,12 @@ var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
     const { containerEl } = this;
     const t = this.plugin.t.bind(this.plugin);
     containerEl.empty();
+    containerEl.addClass("btf-settings");
+    new import_obsidian.Setting(containerEl).setName(t("introTitle")).setDesc(t("introDesc")).setHeading();
+    new import_obsidian.Setting(containerEl).setName(t("enabled")).setDesc(t("enabledDesc")).addToggle((tg) => tg.setValue(this.plugin.settings.enabled).onChange(async (v) => {
+      await this.plugin.setEnabled(v);
+      this.display();
+    }));
     new import_obsidian.Setting(containerEl).setName(t("language")).setDesc(t("languageDesc")).addDropdown((dd) => dd.addOption("auto", t("auto")).addOption("zh", t("chinese")).addOption("en", t("english")).setValue(this.plugin.settings.language).onChange(async (v) => {
       this.plugin.settings.language = v;
       await this.plugin.saveSettings();
@@ -383,23 +421,50 @@ var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
       this.display();
     }));
     if (this.plugin.settings.watchScope === "custom") {
-      new import_obsidian.Setting(containerEl).setName(t("customSelector")).setDesc(t("customSelectorDesc")).addText((tx) => tx.setPlaceholder(".modal-container, .notice").setValue(this.plugin.settings.customSelector).onChange(async (v) => {
-        this.plugin.settings.customSelector = v;
-        await this.plugin.saveSettings();
-        this.plugin.restartDetection();
-      }));
-    }
-    new import_obsidian.Setting(containerEl).setName(t("focusInterval")).setDesc(t("focusIntervalDesc")).addText((tx) => {
-      tx.setPlaceholder("5").setValue(String(this.plugin.settings.focusInterval)).onChange(async (v) => {
-        const n = parseInt(v);
-        if (!isNaN(n) && n >= 0) {
-          this.plugin.settings.focusInterval = n;
+      const row = new import_obsidian.Setting(containerEl).setName(t("customSelector")).setDesc(t("customSelectorDesc"));
+      const flag = (el, bad) => {
+        el.toggleClass("is-invalid", bad);
+        row.descEl.setText(bad ? t("selectorInvalid") : t("customSelectorDesc"));
+        row.descEl.toggleClass("mod-warning", bad);
+      };
+      row.addText((tx) => {
+        const stored = this.plugin.settings.customSelector.trim();
+        flag(tx.inputEl, stored.length > 0 && !isValidSelector(stored));
+        tx.setPlaceholder(".modal-container, .notice").setValue(this.plugin.settings.customSelector).onChange(async (v) => {
+          const trimmed = v.trim();
+          const bad = trimmed.length > 0 && !isValidSelector(trimmed);
+          flag(tx.inputEl, bad);
+          if (bad) return;
+          this.plugin.settings.customSelector = v;
           await this.plugin.saveSettings();
+          this.plugin.restartDetection();
+        });
+      });
+    }
+    const cooldown = new import_obsidian.Setting(containerEl).setName(t("focusInterval")).setDesc(t("focusIntervalDesc"));
+    cooldown.addText((tx) => {
+      const flag = (bad) => {
+        tx.inputEl.toggleClass("is-invalid", bad);
+        cooldown.descEl.setText(bad ? t("secondsInvalid") : t("focusIntervalDesc"));
+        cooldown.descEl.toggleClass("mod-warning", bad);
+      };
+      tx.setValue(String(this.plugin.settings.focusInterval)).onChange(async (v) => {
+        const n = Number.parseInt(v, 10);
+        if (v.trim() === "" || Number.isNaN(n) || n < 0) {
+          flag(true);
+          return;
         }
+        flag(false);
+        this.plugin.settings.focusInterval = n;
+        await this.plugin.saveSettings();
       });
       tx.inputEl.type = "number";
       tx.inputEl.min = "0";
       tx.inputEl.step = "1";
+      tx.inputEl.addEventListener("blur", () => {
+        tx.inputEl.value = String(this.plugin.settings.focusInterval);
+        flag(false);
+      });
     });
     new import_obsidian.Setting(containerEl).setName(t("quietHours")).setDesc(t("quietHoursDesc")).addToggle((tg) => tg.setValue(this.plugin.settings.quietHoursEnabled).onChange(async (v) => {
       this.plugin.settings.quietHoursEnabled = v;
@@ -407,27 +472,50 @@ var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
       this.display();
     }));
     if (this.plugin.settings.quietHoursEnabled) {
-      new import_obsidian.Setting(containerEl).setName(t("quietStart")).addText((tx) => {
+      const row = new import_obsidian.Setting(containerEl).setName(t("quietRange"));
+      const flag = () => {
+        const start = parseTimeToMinutes(this.plugin.settings.quietStart);
+        const end = parseTimeToMinutes(this.plugin.settings.quietEnd);
+        if (start === null || end === null) {
+          row.descEl.setText(t("quietUnset"));
+          row.descEl.toggleClass("mod-warning", true);
+        } else if (start === end) {
+          row.descEl.setText(t("quietSame"));
+          row.descEl.toggleClass("mod-warning", false);
+        } else {
+          row.descEl.setText("");
+          row.descEl.toggleClass("mod-warning", false);
+        }
+      };
+      row.addText((tx) => {
         tx.setValue(this.plugin.settings.quietStart).onChange(async (v) => {
           this.plugin.settings.quietStart = v;
           await this.plugin.saveSettings();
+          flag();
         });
         tx.inputEl.type = "time";
+        tx.inputEl.setAttribute("aria-label", t("quietStart"));
       });
-      new import_obsidian.Setting(containerEl).setName(t("quietEnd")).addText((tx) => {
+      row.controlEl.createSpan({ cls: "btf-arrow", text: "\u2192" });
+      row.addText((tx) => {
         tx.setValue(this.plugin.settings.quietEnd).onChange(async (v) => {
           this.plugin.settings.quietEnd = v;
           await this.plugin.saveSettings();
+          flag();
         });
         tx.inputEl.type = "time";
+        tx.inputEl.setAttribute("aria-label", t("quietEnd"));
       });
+      flag();
     }
     new import_obsidian.Setting(containerEl).setName(t("debugMode")).setDesc(t("debugModeDesc")).addToggle((tg) => tg.setValue(this.plugin.settings.debugMode).onChange(async (v) => {
       this.plugin.settings.debugMode = v;
       await this.plugin.saveSettings();
     }));
-    const guide = containerEl.createEl("details");
-    guide.createEl("summary", { text: t("guide") });
+    const guide = containerEl.createEl("details", { cls: "btf-guide" });
+    const summary = guide.createEl("summary");
+    (0, import_obsidian.setIcon)(summary.createDiv("collapse-icon"), "chevron-right");
+    summary.createSpan({ text: t("guide") });
     const gc = guide.createDiv();
     gc.createEl("p", { text: t("guideKeywords") });
     gc.createEl("p", { text: t("guideScope") });

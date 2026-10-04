@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, getLanguage as getObsidianLanguage } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, getLanguage as getObsidianLanguage, setIcon } from "obsidian";
 
 // Electron interfaces
 interface ElectronWindow extends Window {
@@ -23,15 +23,16 @@ interface ElectronBrowserWindow {
 // --- i18n ---
 
 type TranslationKey =
+  | "introTitle" | "introDesc"
+  | "enabled" | "enabledDesc"
   | "language" | "languageDesc" | "auto" | "chinese" | "english"
   | "keywords" | "keywordsDesc"
   | "watchScope" | "watchScopeDesc"
   | "scopeModal" | "scopeNotice" | "scopeBoth" | "scopeCustom"
-  | "customSelector" | "customSelectorDesc"
-  | "focusInterval" | "focusIntervalDesc"
-  | "quietHours" | "quietHoursDesc" | "quietStart" | "quietEnd"
+  | "customSelector" | "customSelectorDesc" | "selectorInvalid"
+  | "focusInterval" | "focusIntervalDesc" | "secondsInvalid"
+  | "quietHours" | "quietHoursDesc" | "quietRange" | "quietStart" | "quietEnd" | "quietUnset" | "quietSame"
   | "debugMode" | "debugModeDesc"
-  | "matchDetected" | "windowFocused" | "cooldownActive" | "quietActive"
   | "guide" | "guideKeywords" | "guideScope" | "guideQuiet" | "guideExamples"
   | "guideEx1" | "guideEx2" | "guideEx3" | "guideTip";
 
@@ -39,60 +40,67 @@ type TranslationRecord = Record<TranslationKey, string>;
 
 const translations: { en: TranslationRecord; zh: TranslationRecord } = {
   en: {
-    language: "Language", languageDesc: "Display language", auto: "Auto", chinese: "中文", english: "English",
+    introTitle: "Works out of the box",
+    introDesc: "A dialog or notification that appears while Obsidian is in the background brings the window to the front.",
+    enabled: "Enabled", enabledDesc: "Turn the raising off without losing your settings.",
+    language: "Plugin language", languageDesc: "Change the language of these settings.", auto: "Follow Obsidian", chinese: "中文", english: "English",
     keywords: "Keywords (optional)",
-    keywordsDesc: "Leave empty to bring to front on any modal/notice when Obsidian is in the background. Add comma-separated keywords to trigger when any one of them appears.",
-    watchScope: "Watch scope", watchScopeDesc: "Which elements to monitor",
-    scopeModal: "Modals", scopeNotice: "Notices", scopeBoth: "Modals & notices", scopeCustom: "Custom selector",
-    customSelector: "CSS selector", customSelectorDesc: "Custom CSS selector (e.g. .modal-container, [data-type=\"my-plugin\"])",
-    focusInterval: "Focus cooldown (seconds)", focusIntervalDesc: "Minimum time between focus actions. Prevents repeated focus stealing. 0 = no cooldown",
-    quietHours: "Quiet hours", quietHoursDesc: "Do not bring the window to front during this time range.",
-    quietStart: "Start time", quietEnd: "End time",
-    debugMode: "Debug mode", debugModeDesc: "Log matching details to console (Ctrl+Shift+I)",
-    matchDetected: "Match detected, bringing to front",
-    windowFocused: "Window already focused, skipping",
-    cooldownActive: "Cooldown active, skipping",
-    quietActive: "Quiet hours active, skipping",
+    keywordsDesc: "Empty = any pop-up. Or list comma-separated words to react only to those.",
+    watchScope: "Watch for", watchScopeDesc: "Which kind of pop-up to react to",
+    scopeModal: "Dialogs", scopeNotice: "Notifications", scopeBoth: "Dialogs & notifications", scopeCustom: "Custom selector",
+    customSelector: "Selector", customSelectorDesc: "Advanced: match any element you name. Empty = dialogs and notifications.",
+    selectorInvalid: "That selector doesn't parse, so it isn't used.",
+    focusInterval: "Cooldown (seconds)", focusIntervalDesc: "Shortest wait between two raises. 0 = no wait.",
+    secondsInvalid: "Enter a whole number of seconds, 0 or more.",
+    quietHours: "Quiet hours", quietHoursDesc: "No raising during these hours. Pop-ups still appear.",
+    quietRange: "Time range", quietStart: "From", quietEnd: "To",
+    quietUnset: "Both times are needed. Quiet hours stay off until they are set.",
+    quietSame: "Start and end are the same time, so nothing is silenced.",
+    debugMode: "Debug mode", debugModeDesc: "Record what was detected in the developer console (Ctrl+Shift+I).",
     guide: "Quick start guide",
-    guideKeywords: "By default (no keywords), Obsidian is brought to front whenever a modal or notice appears while it is in the background. Add comma-separated keywords to only trigger when any keyword appears in the element text.",
-    guideScope: "Watch scope: \"Modals\" watches popup dialogs, \"Notices\" watches toast messages, \"Both\" watches everything. Use \"Custom\" for advanced CSS selectors.",
-    guideQuiet: "Quiet hours: inside the range you set, modals and notices still appear as usual — only the bring-to-front is suppressed, so nothing is missed. Ranges that span midnight, such as 22:00 to 08:00, work as expected.",
+    guideKeywords: "With no keywords, Obsidian comes forward whenever a dialog or notification appears while it is in the background. Add keywords to narrow that down.",
+    guideScope: "\"Dialogs\" are the windows that block the page, \"Notifications\" are the small messages in the corner. \"Custom selector\" is for advanced matching.",
+    guideQuiet: "During quiet hours nothing is hidden: pop-ups still appear inside Obsidian, the window simply stays where it is. Ranges may cross midnight, such as 22:00 to 08:00.",
     guideExamples: "Examples",
-    guideEx1: "Reminder popup → keywords \"snooze, done\", scope \"Modals\"",
-    guideEx2: "Error alerts → keywords \"error, failed\", scope \"Notices\"",
-    guideEx3: "All modals & notices → leave keywords empty, scope \"Both\" (default)",
-    guideTip: "Tip: To find a CSS selector — open DevTools (Ctrl+Shift+I), click the inspect icon (top-left of DevTools panel), click the target element, then use the class names shown in the Elements panel (e.g. .my-plugin-modal).",
+    guideEx1: "Reminder dialogs → keywords \"snooze, done\", watch for \"Dialogs\"",
+    guideEx2: "Sync errors → keywords \"error, failed\", watch for \"Notifications\"",
+    guideEx3: "Everything → leave keywords empty, watch for \"Dialogs & notifications\" (default)",
+    guideTip: "To find a selector: open the developer console (Ctrl+Shift+I), pick the inspect tool, click the element, and read its class name.",
   },
   zh: {
-    language: "语言", languageDesc: "显示语言", auto: "自动", chinese: "中文", english: "English",
+    introTitle: "开箱即用",
+    introDesc: "Obsidian 在后台时出现弹窗或通知，就把窗口带到最前面。",
+    enabled: "已启用", enabledDesc: "关掉后不再置顶，设置会保留。",
+    language: "插件语言", languageDesc: "更改这些设置项的显示语言。", auto: "跟随 Obsidian", chinese: "中文", english: "English",
     keywords: "关键词（可选）",
-    keywordsDesc: "留空即可：后台出现弹窗或通知时自动置顶。填写逗号分隔的关键词，出现任一即触发。",
-    watchScope: "监听范围", watchScopeDesc: "监听哪类元素",
+    keywordsDesc: "留空 = 任何弹窗都置顶；填写逗号分隔的词语，只匹配包含它们的弹窗。",
+    watchScope: "监听对象", watchScopeDesc: "对哪类弹窗做出反应",
     scopeModal: "弹窗", scopeNotice: "通知", scopeBoth: "弹窗和通知", scopeCustom: "自定义选择器",
-    customSelector: "CSS 选择器", customSelectorDesc: "自定义 CSS 选择器（如 .modal-container、[data-type=\"my-plugin\"]）",
-    focusInterval: "聚焦冷却（秒）", focusIntervalDesc: "两次置顶之间的最小间隔，防止反复抢焦。0 = 不限制",
-    quietHours: "静默时段", quietHoursDesc: "该时间段内不把窗口置顶。",
-    quietStart: "开始时间", quietEnd: "结束时间",
-    debugMode: "调试模式", debugModeDesc: "在控制台（Ctrl+Shift+I）输出匹配日志",
-    matchDetected: "检测到匹配，正在置顶",
-    windowFocused: "窗口已在前台，跳过",
-    cooldownActive: "冷却中，跳过",
-    quietActive: "处于静默时段，跳过",
+    customSelector: "选择器", customSelectorDesc: "高级用法：匹配你指定的任意元素。留空 = 弹窗和通知。",
+    selectorInvalid: "这个选择器无法解析，不会生效。",
+    focusInterval: "冷却时间（秒）", focusIntervalDesc: "两次置顶之间的最短间隔。0 = 不限制。",
+    secondsInvalid: "请输入 0 或更大的整数秒。",
+    quietHours: "静默时段", quietHoursDesc: "这段时间内不置顶窗口，弹窗照常出现。",
+    quietRange: "起止时间", quietStart: "开始", quietEnd: "结束",
+    quietUnset: "两个时间都要填，静默时段才会生效。",
+    quietSame: "开始与结束相同，不会静默。",
+    debugMode: "调试模式", debugModeDesc: "在开发者控制台（Ctrl+Shift+I）记录检测到的内容。",
     guide: "入门指南",
-    guideKeywords: "默认无需配置：后台出现弹窗或通知时自动置顶。如需过滤，填入逗号分隔的关键词，出现任一关键词即触发。",
-    guideScope: "监听范围：「弹窗」监听对话框弹窗，「通知」监听右上角提示消息，「弹窗和通知」同时监听两者。需要更灵活的匹配请选「自定义」输入 CSS 选择器。",
-    guideQuiet: "静默时段：设定的时段内，弹窗和通知照常出现，只是不再抢占前台，不会遗漏任何内容。支持 22:00 到 08:00 这类跨午夜的时段。",
+    guideKeywords: "不设关键词时，只要 Obsidian 在后台弹出窗口或通知，就会置顶。填入关键词可以缩小范围。",
+    guideScope: "「弹窗」指挡住页面的对话框，「通知」指角落里的小消息条。需要更灵活的匹配请选「自定义选择器」。",
+    guideQuiet: "静默时段内不会隐藏任何内容：弹窗和通知照常出现，只是窗口不再跳到最前面。时段可以跨午夜，例如 22:00 到 08:00。",
     guideExamples: "配置示例",
-    guideEx1: "提醒弹窗 → 关键词 \"snooze, done\"，范围「弹窗」",
-    guideEx2: "错误提示 → 关键词 \"error, failed\"，范围「通知」",
-    guideEx3: "所有弹窗和通知 → 关键词留空，范围「弹窗和通知」（默认）",
-    guideTip: "提示：查找 CSS 选择器——打开开发者工具（Ctrl+Shift+I），点击左上角的选择器图标，点击目标元素，在 Elements 面板中查看 class 名称（如 .my-plugin-modal）。",
+    guideEx1: "提醒对话框 → 关键词「snooze, done」，监听「弹窗」",
+    guideEx2: "同步报错 → 关键词「error, failed」，监听「通知」",
+    guideEx3: "全部 → 关键词留空，监听「弹窗和通知」（默认）",
+    guideTip: "查找选择器：打开开发者控制台（Ctrl+Shift+I），用检查工具点击目标元素，读取它的 class 名称。",
   },
 };
 
 // --- Settings ---
 
 interface BringToFrontSettings {
+  enabled: boolean;
   keywords: string;
   watchScope: "modal" | "notice" | "both" | "custom";
   customSelector: string;
@@ -115,6 +123,7 @@ const SCOPE_SELECTORS: Record<string, string> = {
 const DEFERRED_TEXT_WINDOW_MS = 3000;
 
 const DEFAULT_SETTINGS: BringToFrontSettings = {
+  enabled: true,
   keywords: "",
   watchScope: "both",
   customSelector: "",
@@ -143,11 +152,27 @@ function parseTimeToMinutes(value: string): number | null {
 
 // Half-open interval [start, end), so adjacent ranges (22:00–08:00 followed by
 // 08:00–22:00) neither overlap nor drop a minute. start > end spans midnight.
-// Pure and clock-free so it stays testable if a test runner is ever added.
+// Takes the clock reading as an argument so the boundary rules stay checkable.
 export function isWithinRange(nowMin: number, startMin: number, endMin: number): boolean {
   if (startMin === endMin) return false;
   if (startMin < endMin) return nowMin >= startMin && nowMin < endMin;
   return nowMin >= startMin || nowMin < endMin;
+}
+
+// --- Selector validation ---
+
+// An unparseable selector is not merely useless — every querySelector call in
+// checkNode/checkExisting swallows the SyntaxError, so the plugin would go
+// quietly deaf. Both doors are shut: the settings page refuses to store one,
+// and getSelector refuses to use one. Probing a detached fragment rather than
+// the live document keeps validation from matching (or disturbing) real UI nodes.
+export function isValidSelector(selector: string): boolean {
+  try {
+    createFragment().querySelector(selector);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // --- Plugin ---
@@ -170,7 +195,7 @@ export default class BringToFrontPlugin extends Plugin {
     await this.loadSettings();
     this.updateTranslations();
     this.addSettingTab(new BringToFrontSettingTab(this.app, this));
-    this.setupDetection();
+    if (this.settings.enabled) this.setupDetection();
     this.debug("Plugin loaded");
   }
 
@@ -199,7 +224,12 @@ export default class BringToFrontPlugin extends Plugin {
 
   private getSelector(): string {
     if (this.settings.watchScope === "custom") {
-      return this.settings.customSelector.trim() || SCOPE_SELECTORS.both;
+      const custom = this.settings.customSelector.trim();
+      // A selector saved by an older build can still be unparseable, and the
+      // settings page only refuses new ones. Fall back so the deaf state is
+      // unreachable rather than merely visible.
+      if (custom && isValidSelector(custom)) return custom;
+      return SCOPE_SELECTORS.both;
     }
     return SCOPE_SELECTORS[this.settings.watchScope] || SCOPE_SELECTORS.both;
   }
@@ -240,7 +270,7 @@ export default class BringToFrontPlugin extends Plugin {
     try {
       const target = node.matches(selector) ? node : node.querySelector<HTMLElement>(selector);
       if (target) this.evaluateTarget(target);
-    } catch { /* invalid selector */ }
+    } catch { /* getSelector validates; this only bounds the blast radius */ }
   }
 
   private checkExisting(selector: string) {
@@ -248,7 +278,7 @@ export default class BringToFrontPlugin extends Plugin {
     try {
       const el = activeDocument.querySelector<HTMLElement>(selector);
       if (el) this.evaluateTarget(el);
-    } catch { /* invalid selector */ }
+    } catch { /* getSelector validates; this only bounds the blast radius */ }
   }
 
   private updateKeywordCache() {
@@ -310,16 +340,18 @@ export default class BringToFrontPlugin extends Plugin {
     return isWithinRange(now.getHours() * 60 + now.getMinutes(), start, end);
   }
 
+  // Console output stays English on purpose: it is what users paste into issue
+  // reports, and a translated line cannot be matched against the docs.
   private handleMatch() {
     // Before isWindowFocused (a pure integer compare vs. an Electron IPC call)
     // and before the cooldown, so a silenced match doesn't spend the cooldown.
     if (this.isSilenced()) {
-      this.debug(this.t("quietActive"));
+      this.debug("quiet hours active, skipping");
       return;
     }
 
     if (this.isWindowFocused()) {
-      this.debug(this.t("windowFocused"));
+      this.debug("window already focused, skipping");
       return;
     }
 
@@ -327,13 +359,13 @@ export default class BringToFrontPlugin extends Plugin {
     if (this.settings.focusInterval > 0) {
       const now = Date.now();
       if ((now - this.lastFocusTime) / 1000 < this.settings.focusInterval) {
-        this.debug(this.t("cooldownActive"));
+        this.debug("cooldown active, skipping");
         return;
       }
       this.lastFocusTime = now;
     }
 
-    this.debug(this.t("matchDetected"));
+    this.debug("match detected, bringing to front");
     void this.bringToFront();
   }
 
@@ -413,8 +445,17 @@ export default class BringToFrontPlugin extends Plugin {
     this.restartTimer = window.setTimeout(() => {
       this.restartTimer = null;
       this.cleanup();
-      this.setupDetection();
+      if (this.settings.enabled) this.setupDetection();
     }, 300);
+  }
+
+  // The on/off switch acts immediately — waiting for a debounce would leave the
+  // window raisable for 300ms after the user asked it to stop.
+  async setEnabled(enabled: boolean) {
+    this.settings.enabled = enabled;
+    await this.saveSettings();
+    this.cleanup();
+    if (enabled) this.setupDetection();
   }
 }
 
@@ -432,6 +473,18 @@ class BringToFrontSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     const t = this.plugin.t.bind(this.plugin);
     containerEl.empty();
+    // Everything in styles.css hangs off this class so the plugin never restyles
+    // the host's settings pane outside its own tab.
+    containerEl.addClass("btf-settings");
+
+    // Intro: the host hides the modal header in the sidebar layout, so without
+    // this the pane would never say what the plugin does.
+    new Setting(containerEl).setName(t("introTitle")).setDesc(t("introDesc")).setHeading();
+
+    // Master switch: the only way to stop raising without deleting the config.
+    new Setting(containerEl).setName(t("enabled")).setDesc(t("enabledDesc"))
+      .addToggle((tg) => tg.setValue(this.plugin.settings.enabled)
+        .onChange(async (v) => { await this.plugin.setEnabled(v); this.display(); }));
 
     // Language
     new Setting(containerEl).setName(t("language")).setDesc(t("languageDesc"))
@@ -448,7 +501,7 @@ class BringToFrontSettingTab extends PluginSettingTab {
         ta.inputEl.rows = 2;
       });
 
-    // Watch scope
+    // Watch for
     new Setting(containerEl).setName(t("watchScope")).setDesc(t("watchScopeDesc"))
       .addDropdown((dd) => dd
         .addOption("modal", t("scopeModal")).addOption("notice", t("scopeNotice"))
@@ -456,43 +509,97 @@ class BringToFrontSettingTab extends PluginSettingTab {
         .setValue(this.plugin.settings.watchScope)
         .onChange(async (v) => { this.plugin.settings.watchScope = v as "modal" | "notice" | "both" | "custom"; await this.plugin.saveSettings(); this.plugin.restartDetection(); this.display(); }));
 
-    // Custom selector (only when scope = custom)
+    // Selector (only when the scope is the custom one)
     if (this.plugin.settings.watchScope === "custom") {
-      new Setting(containerEl).setName(t("customSelector")).setDesc(t("customSelectorDesc"))
-        .addText((tx) => tx
-          .setPlaceholder(".modal-container, .notice")
+      const row = new Setting(containerEl).setName(t("customSelector")).setDesc(t("customSelectorDesc"));
+      const flag = (el: HTMLElement, bad: boolean) => {
+        el.toggleClass("is-invalid", bad);
+        row.descEl.setText(bad ? t("selectorInvalid") : t("customSelectorDesc"));
+        row.descEl.toggleClass("mod-warning", bad);
+      };
+      row.addText((tx) => {
+        const stored = this.plugin.settings.customSelector.trim();
+        // A bad selector saved by an older build surfaces on open, not only on edit.
+        flag(tx.inputEl, stored.length > 0 && !isValidSelector(stored));
+        tx.setPlaceholder(".modal-container, .notice")
           .setValue(this.plugin.settings.customSelector)
-          .onChange(async (v) => { this.plugin.settings.customSelector = v; await this.plugin.saveSettings(); this.plugin.restartDetection(); }));
+          .onChange(async (v) => {
+            const trimmed = v.trim();
+            const bad = trimmed.length > 0 && !isValidSelector(trimmed);
+            flag(tx.inputEl, bad);
+            // Keep the last good selector running rather than going deaf.
+            if (bad) return;
+            this.plugin.settings.customSelector = v;
+            await this.plugin.saveSettings();
+            this.plugin.restartDetection();
+          });
+      });
     }
 
-    // Focus cooldown (main setting, not advanced)
-    new Setting(containerEl).setName(t("focusInterval")).setDesc(t("focusIntervalDesc"))
-      .addText((tx) => {
-        tx.setPlaceholder("5").setValue(String(this.plugin.settings.focusInterval))
-          .onChange(async (v) => { const n = parseInt(v); if (!isNaN(n) && n >= 0) { this.plugin.settings.focusInterval = n; await this.plugin.saveSettings(); } });
-        tx.inputEl.type = "number"; tx.inputEl.min = "0"; tx.inputEl.step = "1";
+    // Cooldown
+    const cooldown = new Setting(containerEl).setName(t("focusInterval")).setDesc(t("focusIntervalDesc"));
+    cooldown.addText((tx) => {
+      const flag = (bad: boolean) => {
+        tx.inputEl.toggleClass("is-invalid", bad);
+        cooldown.descEl.setText(bad ? t("secondsInvalid") : t("focusIntervalDesc"));
+        cooldown.descEl.toggleClass("mod-warning", bad);
+      };
+      tx.setValue(String(this.plugin.settings.focusInterval))
+        .onChange(async (v) => {
+          const n = Number.parseInt(v, 10);
+          if (v.trim() === "" || Number.isNaN(n) || n < 0) { flag(true); return; }
+          flag(false);
+          this.plugin.settings.focusInterval = n;
+          await this.plugin.saveSettings();
+        });
+      tx.inputEl.type = "number"; tx.inputEl.min = "0"; tx.inputEl.step = "1";
+      // On the way out, make the field say what is actually stored.
+      tx.inputEl.addEventListener("blur", () => {
+        tx.inputEl.value = String(this.plugin.settings.focusInterval);
+        flag(false);
       });
+    });
 
     // Quiet hours
     new Setting(containerEl).setName(t("quietHours")).setDesc(t("quietHoursDesc"))
       .addToggle((tg) => tg.setValue(this.plugin.settings.quietHoursEnabled)
         .onChange(async (v) => { this.plugin.settings.quietHoursEnabled = v; await this.plugin.saveSettings(); this.display(); }));
 
-    // Start / end time (only when quiet hours are enabled)
+    // Both times on one row: they are one value, and two unlabelled rows read as
+    // two independent settings.
     if (this.plugin.settings.quietHoursEnabled) {
-      new Setting(containerEl).setName(t("quietStart"))
-        .addText((tx) => {
-          tx.setValue(this.plugin.settings.quietStart)
-            .onChange(async (v) => { this.plugin.settings.quietStart = v; await this.plugin.saveSettings(); });
-          tx.inputEl.type = "time";
-        });
-
-      new Setting(containerEl).setName(t("quietEnd"))
-        .addText((tx) => {
-          tx.setValue(this.plugin.settings.quietEnd)
-            .onChange(async (v) => { this.plugin.settings.quietEnd = v; await this.plugin.saveSettings(); });
-          tx.inputEl.type = "time";
-        });
+      const row = new Setting(containerEl).setName(t("quietRange"));
+      const flag = () => {
+        const start = parseTimeToMinutes(this.plugin.settings.quietStart);
+        const end = parseTimeToMinutes(this.plugin.settings.quietEnd);
+        // Equal ends is a valid-looking range that silences nothing, so it needs
+        // its own message rather than the missing-value warning.
+        if (start === null || end === null) {
+          row.descEl.setText(t("quietUnset"));
+          row.descEl.toggleClass("mod-warning", true);
+        } else if (start === end) {
+          row.descEl.setText(t("quietSame"));
+          row.descEl.toggleClass("mod-warning", false);
+        } else {
+          row.descEl.setText("");
+          row.descEl.toggleClass("mod-warning", false);
+        }
+      };
+      // Two identical controls share one row label, so each needs its own name.
+      row.addText((tx) => {
+        tx.setValue(this.plugin.settings.quietStart)
+          .onChange(async (v) => { this.plugin.settings.quietStart = v; await this.plugin.saveSettings(); flag(); });
+        tx.inputEl.type = "time";
+        tx.inputEl.setAttribute("aria-label", t("quietStart"));
+      });
+      row.controlEl.createSpan({ cls: "btf-arrow", text: "→" });
+      row.addText((tx) => {
+        tx.setValue(this.plugin.settings.quietEnd)
+          .onChange(async (v) => { this.plugin.settings.quietEnd = v; await this.plugin.saveSettings(); flag(); });
+        tx.inputEl.type = "time";
+        tx.inputEl.setAttribute("aria-label", t("quietEnd"));
+      });
+      flag();
     }
 
     // Debug
@@ -500,8 +607,10 @@ class BringToFrontSettingTab extends PluginSettingTab {
       .addToggle((tg) => tg.setValue(this.plugin.settings.debugMode).onChange(async (v) => { this.plugin.settings.debugMode = v; await this.plugin.saveSettings(); }));
 
     // --- Guide ---
-    const guide = containerEl.createEl("details");
-    guide.createEl("summary", { text: t("guide") });
+    const guide = containerEl.createEl("details", { cls: "btf-guide" });
+    const summary = guide.createEl("summary");
+    setIcon(summary.createDiv("collapse-icon"), "chevron-right");
+    summary.createSpan({ text: t("guide") });
     const gc = guide.createDiv();
     gc.createEl("p", { text: t("guideKeywords") });
     gc.createEl("p", { text: t("guideScope") });

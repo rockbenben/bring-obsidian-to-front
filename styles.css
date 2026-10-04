@@ -1,0 +1,108 @@
+/* Bring to Front — settings tab styling.
+ * Every rule is scoped under .btf-settings (added in main.ts display()) so this
+ * file can never restyle Obsidian's settings pane outside this plugin's tab. */
+
+/* The host gives .setting-item-info and .setting-item-control the same
+ * `flex: 1 1 auto` basis, so a wide field wins and the description column is
+ * what collapses once the settings pane gets narrow. Give the text the
+ * majority, and wrap the row instead of squeezing it further. */
+.btf-settings .setting-item {
+  flex-wrap: wrap;
+}
+.btf-settings .setting-item-info {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.btf-settings .setting-item-control {
+  flex: 0 1 42%;
+  min-width: 90px;
+}
+.btf-settings .setting-item-control textarea,
+.btf-settings .setting-item-control input[type="text"],
+.btf-settings .setting-item-control input[type="number"],
+.btf-settings .setting-item-control select {
+  width: 100%;
+  min-width: 0;
+}
+
+/* The host's field rules cover date, datetime-local, text, search, email,
+ * password and number — but not type=time — so the quiet-hours inputs would
+ * otherwise render as raw browser controls (square, bevelled, shorter, and with
+ * no focus ring). Same tokens the host uses for its other fields. */
+.btf-settings input[type="time"] {
+  background: var(--background-modifier-form-field);
+  border: var(--input-border-width) solid var(--background-modifier-border);
+  border-radius: var(--input-radius);
+  color: var(--text-normal);
+  font-family: inherit;
+  font-size: var(--font-ui-small);
+  height: var(--input-height);
+  padding: var(--size-4-1) var(--size-4-2);
+}
+.btf-settings input[type="time"]:hover {
+  border-color: var(--background-modifier-border-hover);
+}
+.btf-settings input[type="time"]:focus-visible {
+  box-shadow: 0 0 0 2px var(--background-modifier-border-focus);
+}
+.btf-settings .btf-arrow {
+  color: var(--text-muted);
+}
+/* Start and end already swap sides with the row; the glyph has to follow. */
+body.mod-rtl .btf-settings .btf-arrow {
+  transform: scaleX(-1);
+}
+
+/* Rejected input is marked on the field and on the row's own description, in
+ * the host's error colour rather than a new one. */
+.btf-settings input.is-invalid,
+.btf-settings textarea.is-invalid {
+  border-color: var(--text-error);
+}
+.btf-settings .setting-item-description.mod-warning {
+  color: var(--text-error);
+}
+
+/* The guide is a native <details>, which otherwise brings an OS disclosure
+ * triangle, an arrow cursor, and body copy at setting-title size and colour.
+ * Use the host's own affordance and secondary-text scale instead. */
+.btf-settings details.btf-guide {
+  margin-top: var(--size-4-4);
+}
+.btf-settings details.btf-guide > summary {
+  align-items: center;
+  color: var(--text-muted);
+  /* --cursor resolves to `default`; the host's pointer token is --cursor-link. */
+  cursor: var(--cursor-link);
+  display: flex;
+  font-size: var(--font-ui-small);
+  gap: var(--size-4-2);
+  list-style: none;
+  padding: var(--size-4-1) 0;
+}
+.btf-settings details.btf-guide > summary::-webkit-details-marker {
+  display: none;
+}
+.btf-settings details.btf-guide > summary .collapse-icon svg.svg-icon {
+  transform: rotate(90deg);
+  transition: transform 100ms ease-in-out;
+}
+.btf-settings details.btf-guide:not([open]) > summary .collapse-icon svg.svg-icon {
+  transform: none;
+}
+.btf-settings details.btf-guide > div p,
+.btf-settings details.btf-guide > div li {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
+  margin: var(--size-4-1) 0;
+  max-width: 60ch;
+}
+.btf-settings details.btf-guide > div > ul {
+  margin: var(--size-4-1) 0;
+  padding-inline-start: var(--size-4-6);
+}
+.btf-settings details.btf-guide .setting-item-heading .setting-item-name {
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
