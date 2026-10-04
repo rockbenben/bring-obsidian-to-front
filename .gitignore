@@ -28,3 +28,8 @@ yarn.lock
 
 # Output files that shouldn't be tracked
 main.js.map
+
+# Local tooling scratch: the UI review harness (it holds a copy of Obsidian's
+# own renderer bundle, so it must not be redistributed) and Qoder's scratch dirs
+design-preview/
+.qoder*

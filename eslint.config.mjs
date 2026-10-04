@@ -7,7 +7,18 @@ import obsidianmd from "eslint-plugin-obsidianmd";
 export default defineConfig([
   // Build output plus Node-side build/release scripts: never bundled into the
   // plugin, so the plugin-runtime rules (no-console and friends) don't apply.
-  globalIgnores(["main.js", "node_modules/", "esbuild.config.mjs", "version-bump.mjs", "eslint.config.mjs"]),
+  // design-preview/ holds the UI review harness, including a copy of Obsidian's
+  // own minified renderer bundle, which is third-party input rather than source.
+  // .qoder-credits/ is tool scratch that reappears between sessions.
+  globalIgnores([
+    "main.js",
+    "node_modules/",
+    "esbuild.config.mjs",
+    "version-bump.mjs",
+    "eslint.config.mjs",
+    "design-preview/",
+    ".qoder-credits/",
+  ]),
   ...obsidianmd.configs.recommended,
   {
     files: ["**/*.ts"],
