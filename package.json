@@ -1,6 +1,6 @@
 {
   "name": "bring-to-front",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Automatically brings the window to the front when a dialog or notification appears while the app is in the background.",
   "main": "main.js",
   "scripts": {

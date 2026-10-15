@@ -1,7 +1,7 @@
 {
   "id": "bring-to-front",
   "name": "Bring to Front",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "minAppVersion": "1.13.0",
   "description": "Automatically brings the window to the front when a dialog or notification appears while the app is in the background.",
   "author": "rockbenben",
