@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, getLanguage as getObsidianLanguage, setIcon } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, SettingDefinitionItem, TextComponent, getLanguage as getObsidianLanguage, setIcon } from "obsidian";
 
 // Electron interfaces
 interface ElectronWindow extends Window {
@@ -419,7 +419,8 @@ export default class BringToFrontPlugin extends Plugin {
     if (this.settings.language === "zh") return "zh";
     if (this.settings.language === "en") return "en";
     // Obsidian's official getLanguage() returns the UI language (a moment locale
-    // like "zh"/"zh-TW"). Requires app 1.8.7+ (see manifest minAppVersion).
+    // like "zh"/"zh-TW"). It has been available since app 1.8.7, well below the
+    // manifest minAppVersion.
     const obsidianLang = getObsidianLanguage();
     const systemLang = navigator.language.toLowerCase();
     return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
@@ -461,6 +462,13 @@ export default class BringToFrontPlugin extends Plugin {
 
 // --- Settings Tab ---
 
+// Obsidian 1.13.0 added a declarative settings API: a tab that returns
+// definitions from getSettingDefinitions() is rendered from them, and its
+// settings are indexed by the settings search. The tab is written against that
+// API (manifest minAppVersion 1.13.0) rather than against the imperative
+// display() it replaced. Only the rows a bound control cannot carry — inline
+// warnings, two fields on one row, prose — are still built by hand, in the row
+// builders at the bottom.
 class BringToFrontSettingTab extends PluginSettingTab {
   plugin: BringToFrontPlugin;
 
@@ -469,86 +477,197 @@ class BringToFrontSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
-  display(): void {
-    const { containerEl } = this;
-    const t = this.plugin.t.bind(this.plugin);
-    containerEl.empty();
-    // Everything in styles.css hangs off this class so the plugin never restyles
-    // the host's settings pane outside its own tab.
-    containerEl.addClass("btf-settings");
+  private t(key: TranslationKey): string {
+    return this.plugin.t(key);
+  }
 
-    // Intro: the host hides the modal header in the sidebar layout, so without
-    // this the pane would never say what the plugin does.
-    new Setting(containerEl).setName(t("introTitle")).setDesc(t("introDesc")).setHeading();
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    const t = this.t.bind(this);
+    // Everything in styles.css hangs off this class so the plugin never
+    // restyles the host's settings pane outside its own tab.
+    this.containerEl.addClass("btf-settings");
 
-    // Master switch: the only way to stop raising without deleting the config.
-    new Setting(containerEl).setName(t("enabled")).setDesc(t("enabledDesc"))
-      .addToggle((tg) => tg.setValue(this.plugin.settings.enabled)
-        .onChange(async (v) => { await this.plugin.setEnabled(v); this.display(); }));
+    return [
+      {
+        name: t("introTitle"),
+        desc: t("introDesc"),
+        // Prose, not a setting: it could only ever match a search for itself.
+        searchable: false,
+        render: (setting) => { setting.setHeading(); },
+      },
+      {
+        name: t("enabled"),
+        desc: t("enabledDesc"),
+        aliases: ["on", "off", "pause"],
+        control: { type: "toggle", key: "enabled" },
+      },
+      {
+        name: t("language"),
+        desc: t("languageDesc"),
+        aliases: ["locale", "chinese", "中文"],
+        control: {
+          type: "dropdown",
+          key: "language",
+          options: { auto: t("auto"), zh: t("chinese"), en: t("english") },
+        },
+      },
+      {
+        name: t("keywords"),
+        desc: t("keywordsDesc"),
+        aliases: ["filter", "words", "text"],
+        control: { type: "textarea", key: "keywords", placeholder: "Snooze, done", rows: 2 },
+      },
+      {
+        name: t("watchScope"),
+        desc: t("watchScopeDesc"),
+        aliases: ["modal", "dialog", "notice", "notification"],
+        control: {
+          type: "dropdown",
+          key: "watchScope",
+          options: {
+            modal: t("scopeModal"),
+            notice: t("scopeNotice"),
+            both: t("scopeBoth"),
+            custom: t("scopeCustom"),
+          },
+        },
+      },
+      {
+        // desc is set here even though the builder below rewrites it on every
+        // keystroke: it is what the row describes while the input is valid, it
+        // gives the settings search the full sentence, and it is what makes the
+        // row own a description element at all.
+        name: t("customSelector"),
+        desc: t("customSelectorDesc"),
+        aliases: ["css", "query"],
+        visible: () => this.plugin.settings.watchScope === "custom",
+        render: (setting) => this.buildSelectorRow(setting),
+      },
+      {
+        name: t("focusInterval"),
+        desc: t("focusIntervalDesc"),
+        aliases: ["cooldown", "seconds", "delay"],
+        render: (setting) => this.buildCooldownRow(setting),
+      },
+      {
+        name: t("quietHours"),
+        desc: t("quietHoursDesc"),
+        aliases: ["do not disturb", "silence", "night"],
+        control: { type: "toggle", key: "quietHoursEnabled" },
+      },
+      {
+        name: t("quietRange"),
+        // The times are one value: a sub-row of the toggle above, which is what
+        // a search should hit. The builder decides what the description says.
+        desc: t("quietHoursDesc"),
+        searchable: false,
+        visible: () => this.plugin.settings.quietHoursEnabled,
+        render: (setting) => this.buildQuietRangeRow(setting),
+      },
+      {
+        name: t("debugMode"),
+        desc: t("debugModeDesc"),
+        aliases: ["console", "log"],
+        control: { type: "toggle", key: "debugMode" },
+      },
+      {
+        name: t("guide"),
+        searchable: false,
+        render: (setting) => {
+          // The guide is a <details> block rather than a row, so the row the
+          // framework built is emptied and replaced by the block itself.
+          setting.settingEl.empty();
+          setting.settingEl.addClass("btf-guide-row");
+          this.buildGuide(setting.settingEl);
+        },
+      },
+    ];
+  }
 
-    // Language
-    new Setting(containerEl).setName(t("language")).setDesc(t("languageDesc"))
-      .addDropdown((dd) => dd
-        .addOption("auto", t("auto")).addOption("zh", t("chinese")).addOption("en", t("english"))
-        .setValue(this.plugin.settings.language)
-        .onChange(async (v) => { this.plugin.settings.language = v as "auto" | "zh" | "en"; await this.plugin.saveSettings(); this.display(); }));
-
-    // Keywords
-    new Setting(containerEl).setName(t("keywords")).setDesc(t("keywordsDesc"))
-      .addTextArea((ta) => {
-        ta.setPlaceholder("Snooze, done").setValue(this.plugin.settings.keywords)
-          .onChange(async (v) => { this.plugin.settings.keywords = v; await this.plugin.saveSettings(); this.plugin.restartDetection(); });
-        ta.inputEl.rows = 2;
-      });
-
-    // Watch for
-    new Setting(containerEl).setName(t("watchScope")).setDesc(t("watchScopeDesc"))
-      .addDropdown((dd) => dd
-        .addOption("modal", t("scopeModal")).addOption("notice", t("scopeNotice"))
-        .addOption("both", t("scopeBoth")).addOption("custom", t("scopeCustom"))
-        .setValue(this.plugin.settings.watchScope)
-        .onChange(async (v) => { this.plugin.settings.watchScope = v as "modal" | "notice" | "both" | "custom"; await this.plugin.saveSettings(); this.plugin.restartDetection(); this.display(); }));
-
-    // Selector (only when the scope is the custom one)
-    if (this.plugin.settings.watchScope === "custom") {
-      const row = new Setting(containerEl).setName(t("customSelector")).setDesc(t("customSelectorDesc"));
-      const flag = (el: HTMLElement, bad: boolean) => {
-        el.toggleClass("is-invalid", bad);
-        row.descEl.setText(bad ? t("selectorInvalid") : t("customSelectorDesc"));
-        row.descEl.toggleClass("mod-warning", bad);
-      };
-      row.addText((tx) => {
-        const stored = this.plugin.settings.customSelector.trim();
-        // A bad selector saved by an older build surfaces on open, not only on edit.
-        flag(tx.inputEl, stored.length > 0 && !isValidSelector(stored));
-        tx.setPlaceholder(".modal-container, .notice")
-          .setValue(this.plugin.settings.customSelector)
-          .onChange(async (v) => {
-            const trimmed = v.trim();
-            const bad = trimmed.length > 0 && !isValidSelector(trimmed);
-            flag(tx.inputEl, bad);
-            // Keep the last good selector running rather than going deaf.
-            if (bad) return;
-            this.plugin.settings.customSelector = v;
-            await this.plugin.saveSettings();
-            this.plugin.restartDetection();
-          });
-      });
+  // Every control definition binds to a key in this.plugin.settings. The stock
+  // implementation writes the value straight to storage, but this plugin's
+  // saveSettings() also refreshes the translations and the keyword cache, and
+  // two of these keys change what detection watches — so every write goes
+  // through here.
+  async setControlValue(key: string, value: unknown): Promise<void> {
+    const settings = this.plugin.settings;
+    switch (key) {
+      case "enabled":
+        // The on/off switch acts immediately rather than after the debounce.
+        await this.plugin.setEnabled(value === true);
+        return;
+      case "language":
+        settings.language = value as BringToFrontSettings["language"];
+        break;
+      case "keywords":
+        settings.keywords = String(value);
+        break;
+      case "watchScope":
+        settings.watchScope = value as BringToFrontSettings["watchScope"];
+        break;
+      case "quietHoursEnabled":
+        settings.quietHoursEnabled = value === true;
+        break;
+      case "debugMode":
+        settings.debugMode = value === true;
+        break;
+      default:
+        return;
     }
 
-    // Cooldown
-    const cooldown = new Setting(containerEl).setName(t("focusInterval")).setDesc(t("focusIntervalDesc"));
-    cooldown.addText((tx) => {
-      const flag = (bad: boolean) => {
-        tx.inputEl.toggleClass("is-invalid", bad);
-        cooldown.descEl.setText(bad ? t("secondsInvalid") : t("focusIntervalDesc"));
-        cooldown.descEl.toggleClass("mod-warning", bad);
-      };
+    await this.plugin.saveSettings();
+    // Detection watches the keywords and the scope, so it has to be rebuilt.
+    if (key === "keywords" || key === "watchScope") this.plugin.restartDetection();
+    // These change which rows are on screen, or what every label on the tab
+    // says, so the definitions have to be asked again rather than patched.
+    if (key === "language" || key === "watchScope" || key === "quietHoursEnabled") this.update();
+  }
+
+  // --- Row builders ---
+  // Everything a bound control cannot carry: a field that has to warn while it
+  // is being typed, two fields that share one row, and the prose guide. Each
+  // builder fills in only that, so the name and description above stay the
+  // single source of what the settings search indexes.
+
+  private buildSelectorRow(row: Setting) {
+    const t = this.t.bind(this);
+    const flag = (el: HTMLElement, bad: boolean) => {
+      el.toggleClass("is-invalid", bad);
+      row.descEl.setText(bad ? t("selectorInvalid") : t("customSelectorDesc"));
+      row.descEl.toggleClass("mod-warning", bad);
+    };
+    row.addText((tx) => {
+      const stored = this.plugin.settings.customSelector.trim();
+      // A bad selector saved by an older build surfaces on open, not only on edit.
+      flag(tx.inputEl, stored.length > 0 && !isValidSelector(stored));
+      tx.setPlaceholder(".modal-container, .notice")
+        .setValue(this.plugin.settings.customSelector)
+        .onChange(async (v) => {
+          const trimmed = v.trim();
+          const bad = trimmed.length > 0 && !isValidSelector(trimmed);
+          flag(tx.inputEl, bad);
+          // Keep the last good selector running rather than going deaf.
+          if (bad) return;
+          this.plugin.settings.customSelector = v;
+          await this.plugin.saveSettings();
+          this.plugin.restartDetection();
+        });
+    });
+  }
+
+  private buildCooldownRow(row: Setting) {
+    const t = this.t.bind(this);
+    const flag = (tx: TextComponent, bad: boolean) => {
+      tx.inputEl.toggleClass("is-invalid", bad);
+      row.descEl.setText(bad ? t("secondsInvalid") : t("focusIntervalDesc"));
+      row.descEl.toggleClass("mod-warning", bad);
+    };
+    row.addText((tx) => {
       tx.setValue(String(this.plugin.settings.focusInterval))
         .onChange(async (v) => {
           const n = Number.parseInt(v, 10);
-          if (v.trim() === "" || Number.isNaN(n) || n < 0) { flag(true); return; }
-          flag(false);
+          if (v.trim() === "" || Number.isNaN(n) || n < 0) { flag(tx, true); return; }
+          flag(tx, false);
           this.plugin.settings.focusInterval = n;
           await this.plugin.saveSettings();
         });
@@ -556,57 +675,48 @@ class BringToFrontSettingTab extends PluginSettingTab {
       // On the way out, make the field say what is actually stored.
       tx.inputEl.addEventListener("blur", () => {
         tx.inputEl.value = String(this.plugin.settings.focusInterval);
-        flag(false);
+        flag(tx, false);
       });
     });
+  }
 
-    // Quiet hours
-    new Setting(containerEl).setName(t("quietHours")).setDesc(t("quietHoursDesc"))
-      .addToggle((tg) => tg.setValue(this.plugin.settings.quietHoursEnabled)
-        .onChange(async (v) => { this.plugin.settings.quietHoursEnabled = v; await this.plugin.saveSettings(); this.display(); }));
+  private buildQuietRangeRow(row: Setting) {
+    const t = this.t.bind(this);
+    const flag = () => {
+      const start = parseTimeToMinutes(this.plugin.settings.quietStart);
+      const end = parseTimeToMinutes(this.plugin.settings.quietEnd);
+      // Equal ends is a valid-looking range that silences nothing, so it needs
+      // its own message rather than the missing-value warning.
+      if (start === null || end === null) {
+        row.descEl.setText(t("quietUnset"));
+        row.descEl.toggleClass("mod-warning", true);
+      } else if (start === end) {
+        row.descEl.setText(t("quietSame"));
+        row.descEl.toggleClass("mod-warning", false);
+      } else {
+        row.descEl.setText("");
+        row.descEl.toggleClass("mod-warning", false);
+      }
+    };
+    // Two identical controls share one row label, so each needs its own name.
+    row.addText((tx) => {
+      tx.setValue(this.plugin.settings.quietStart)
+        .onChange(async (v) => { this.plugin.settings.quietStart = v; await this.plugin.saveSettings(); flag(); });
+      tx.inputEl.type = "time";
+      tx.inputEl.setAttribute("aria-label", t("quietStart"));
+    });
+    row.controlEl.createSpan({ cls: "btf-arrow", text: "→" });
+    row.addText((tx) => {
+      tx.setValue(this.plugin.settings.quietEnd)
+        .onChange(async (v) => { this.plugin.settings.quietEnd = v; await this.plugin.saveSettings(); flag(); });
+      tx.inputEl.type = "time";
+      tx.inputEl.setAttribute("aria-label", t("quietEnd"));
+    });
+    flag();
+  }
 
-    // Both times on one row: they are one value, and two unlabelled rows read as
-    // two independent settings.
-    if (this.plugin.settings.quietHoursEnabled) {
-      const row = new Setting(containerEl).setName(t("quietRange"));
-      const flag = () => {
-        const start = parseTimeToMinutes(this.plugin.settings.quietStart);
-        const end = parseTimeToMinutes(this.plugin.settings.quietEnd);
-        // Equal ends is a valid-looking range that silences nothing, so it needs
-        // its own message rather than the missing-value warning.
-        if (start === null || end === null) {
-          row.descEl.setText(t("quietUnset"));
-          row.descEl.toggleClass("mod-warning", true);
-        } else if (start === end) {
-          row.descEl.setText(t("quietSame"));
-          row.descEl.toggleClass("mod-warning", false);
-        } else {
-          row.descEl.setText("");
-          row.descEl.toggleClass("mod-warning", false);
-        }
-      };
-      // Two identical controls share one row label, so each needs its own name.
-      row.addText((tx) => {
-        tx.setValue(this.plugin.settings.quietStart)
-          .onChange(async (v) => { this.plugin.settings.quietStart = v; await this.plugin.saveSettings(); flag(); });
-        tx.inputEl.type = "time";
-        tx.inputEl.setAttribute("aria-label", t("quietStart"));
-      });
-      row.controlEl.createSpan({ cls: "btf-arrow", text: "→" });
-      row.addText((tx) => {
-        tx.setValue(this.plugin.settings.quietEnd)
-          .onChange(async (v) => { this.plugin.settings.quietEnd = v; await this.plugin.saveSettings(); flag(); });
-        tx.inputEl.type = "time";
-        tx.inputEl.setAttribute("aria-label", t("quietEnd"));
-      });
-      flag();
-    }
-
-    // Debug
-    new Setting(containerEl).setName(t("debugMode")).setDesc(t("debugModeDesc"))
-      .addToggle((tg) => tg.setValue(this.plugin.settings.debugMode).onChange(async (v) => { this.plugin.settings.debugMode = v; await this.plugin.saveSettings(); }));
-
-    // --- Guide ---
+  private buildGuide(containerEl: HTMLElement) {
+    const t = this.t.bind(this);
     const guide = containerEl.createEl("details", { cls: "btf-guide" });
     const summary = guide.createEl("summary");
     setIcon(summary.createDiv("collapse-icon"), "chevron-right");

@@ -69,6 +69,12 @@ body.mod-rtl .btf-settings .btf-arrow {
 .btf-settings details.btf-guide {
   margin-top: var(--size-4-4);
 }
+/* On 1.13.0+ the guide is rendered inside the row element the declarative
+ * framework builds, so that row has to stop being a flex line for the block to
+ * take the full width it has when display() appends it to the container. */
+.btf-settings .setting-item.btf-guide-row {
+  display: block;
+}
 .btf-settings details.btf-guide > summary {
   align-items: center;
   color: var(--text-muted);

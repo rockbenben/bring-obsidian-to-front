@@ -14,7 +14,7 @@ Obsidian's reminders, sync warnings and plugin pop-ups all appear inside its own
 
 **It works the moment you enable it — no setup, no keywords, nothing to configure.** If you want, you can later filter what triggers it (see [Settings](#settings-all-optional)).
 
-> **Desktop only** (Windows / macOS / Linux). It uses Electron window APIs and does not run on mobile. Requires Obsidian **1.8.7** or newer.
+> **Desktop only** (Windows / macOS / Linux). It uses Electron window APIs and does not run on mobile. Requires Obsidian **1.13.0** or newer.
 
 ![Obsidian sitting in the background, then jumping to the front the moment a notice fires](demo.gif)
 
