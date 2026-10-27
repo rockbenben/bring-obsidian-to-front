@@ -43,7 +43,8 @@ var translations = {
     chinese: "\u4E2D\u6587",
     english: "English",
     keywords: "Keywords (optional)",
-    keywordsDesc: "Empty = any pop-up. Or list comma-separated words to react only to those.",
+    keywordsDesc: "Empty = any pop-up. Separate words with commas or new lines.",
+    keywordsPlaceholder: "Snooze, done",
     watchScope: "Watch for",
     watchScopeDesc: "Which kind of pop-up to react to",
     scopeModal: "Dialogs",
@@ -86,7 +87,8 @@ var translations = {
     chinese: "\u4E2D\u6587",
     english: "English",
     keywords: "\u5173\u952E\u8BCD\uFF08\u53EF\u9009\uFF09",
-    keywordsDesc: "\u7559\u7A7A = \u4EFB\u4F55\u5F39\u7A97\u90FD\u7F6E\u9876\uFF1B\u586B\u5199\u9017\u53F7\u5206\u9694\u7684\u8BCD\u8BED\uFF0C\u53EA\u5339\u914D\u5305\u542B\u5B83\u4EEC\u7684\u5F39\u7A97\u3002",
+    keywordsDesc: "\u7559\u7A7A = \u4EFB\u4F55\u5F39\u7A97\u90FD\u7F6E\u9876\uFF1B\u7528\u9017\u53F7\u6216\u6362\u884C\u5206\u9694\u8BCD\u8BED\uFF0C\u53EA\u5339\u914D\u5305\u542B\u5B83\u4EEC\u7684\u5F39\u7A97\u3002",
+    keywordsPlaceholder: "\u6682\u7F13\uFF0C\u5B8C\u6210",
     watchScope: "\u76D1\u542C\u5BF9\u8C61",
     watchScopeDesc: "\u5BF9\u54EA\u7C7B\u5F39\u7A97\u505A\u51FA\u53CD\u5E94",
     scopeModal: "\u5F39\u7A97",
@@ -245,7 +247,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     }
   }
   updateKeywordCache() {
-    this.cachedKeywords = this.settings.keywords.split(",").map((k) => k.trim().toLowerCase()).filter((k) => k.length > 0);
+    this.cachedKeywords = this.settings.keywords.split(/[,，、\r\n]+/).map((k) => k.trim().toLowerCase()).filter((k) => k.length > 0);
   }
   matchesKeywords(el) {
     if (this.cachedKeywords.length === 0) return true;
@@ -444,7 +446,7 @@ var BringToFrontSettingTab = class extends import_obsidian.PluginSettingTab {
         name: t("keywords"),
         desc: t("keywordsDesc"),
         aliases: ["filter", "words", "text"],
-        control: { type: "textarea", key: "keywords", placeholder: "Snooze, done", rows: 2 }
+        control: { type: "textarea", key: "keywords", placeholder: t("keywordsPlaceholder"), rows: 2 }
       },
       {
         name: t("watchScope"),

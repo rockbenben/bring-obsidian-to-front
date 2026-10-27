@@ -29,7 +29,7 @@ type TranslationKey =
   | "introTitle" | "introDesc"
   | "enabled" | "enabledDesc"
   | "language" | "languageDesc" | "auto" | "chinese" | "english"
-  | "keywords" | "keywordsDesc"
+  | "keywords" | "keywordsDesc" | "keywordsPlaceholder"
   | "watchScope" | "watchScopeDesc"
   | "scopeModal" | "scopeNotice" | "scopeBoth" | "scopeCustom"
   | "customSelector" | "customSelectorDesc" | "selectorInvalid"
@@ -48,7 +48,8 @@ const translations: { en: TranslationRecord; zh: TranslationRecord } = {
     enabled: "Enabled", enabledDesc: "Turn the raising off without losing your settings.",
     language: "Plugin language", languageDesc: "Change the language of these settings.", auto: "Follow Obsidian", chinese: "中文", english: "English",
     keywords: "Keywords (optional)",
-    keywordsDesc: "Empty = any pop-up. Or list comma-separated words to react only to those.",
+    keywordsDesc: "Empty = any pop-up. Separate words with commas or new lines.",
+    keywordsPlaceholder: "Snooze, done",
     watchScope: "Watch for", watchScopeDesc: "Which kind of pop-up to react to",
     scopeModal: "Dialogs", scopeNotice: "Notifications", scopeBoth: "Dialogs & notifications", scopeCustom: "Custom selector",
     customSelector: "Selector", customSelectorDesc: "Advanced: match any element you name. Empty = dialogs and notifications.",
@@ -76,7 +77,8 @@ const translations: { en: TranslationRecord; zh: TranslationRecord } = {
     enabled: "已启用", enabledDesc: "关掉后不再置顶，设置会保留。",
     language: "插件语言", languageDesc: "更改这些设置项的显示语言。", auto: "跟随 Obsidian", chinese: "中文", english: "English",
     keywords: "关键词（可选）",
-    keywordsDesc: "留空 = 任何弹窗都置顶；填写逗号分隔的词语，只匹配包含它们的弹窗。",
+    keywordsDesc: "留空 = 任何弹窗都置顶；用逗号或换行分隔词语，只匹配包含它们的弹窗。",
+    keywordsPlaceholder: "暂缓，完成",
     watchScope: "监听对象", watchScopeDesc: "对哪类弹窗做出反应",
     scopeModal: "弹窗", scopeNotice: "通知", scopeBoth: "弹窗和通知", scopeCustom: "自定义选择器",
     customSelector: "选择器", customSelectorDesc: "高级用法：匹配你指定的任意元素。留空 = 弹窗和通知。",
@@ -293,7 +295,12 @@ export default class BringToFrontPlugin extends Plugin {
   }
 
   private updateKeywordCache() {
-    this.cachedKeywords = this.settings.keywords.split(",").map((k) => k.trim().toLowerCase()).filter((k) => k.length > 0);
+    // Full-width and ideographic commas are what a Chinese IME produces;
+    // new lines cover a list pasted into the textarea.
+    this.cachedKeywords = this.settings.keywords
+      .split(/[,，、\r\n]+/)
+      .map((k) => k.trim().toLowerCase())
+      .filter((k) => k.length > 0);
   }
 
   private matchesKeywords(el: HTMLElement): boolean {
@@ -544,7 +551,7 @@ class BringToFrontSettingTab extends PluginSettingTab {
         name: t("keywords"),
         desc: t("keywordsDesc"),
         aliases: ["filter", "words", "text"],
-        control: { type: "textarea", key: "keywords", placeholder: "Snooze, done", rows: 2 },
+        control: { type: "textarea", key: "keywords", placeholder: t("keywordsPlaceholder"), rows: 2 },
       },
       {
         name: t("watchScope"),
