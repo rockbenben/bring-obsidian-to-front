@@ -7,6 +7,9 @@ interface ElectronWindow extends Window {
 
 interface ElectronRemote {
   getCurrentWindow(): ElectronBrowserWindow;
+  BrowserWindow?: {
+    getAllWindows(): ElectronBrowserWindow[];
+  };
 }
 
 interface ElectronBrowserWindow {
@@ -222,6 +225,13 @@ export default class BringToFrontPlugin extends Plugin {
 
   // --- Detection ---
 
+  // The main workspace document. rootSplit is not available yet during the
+  // earliest part of startup, so fall back to this renderer's document (the
+  // plugin runs in the main window).
+  private getMainDocument(): Document {
+    return this.app.workspace.rootSplit?.doc ?? document;
+  }
+
   private getSelector(): string {
     if (this.settings.watchScope === "custom") {
       const custom = this.settings.customSelector.trim();
@@ -236,22 +246,20 @@ export default class BringToFrontPlugin extends Plugin {
 
   private setupDetection() {
     const selector = this.getSelector();
+    const doc = this.getMainDocument();
 
     this.observer = new MutationObserver((mutations) => {
       // Quiet hours: nothing below can lead to a bring-to-front, so skip the
       // scan entirely and don't attach deferred watchers either.
       if (this.isSilenced()) return;
-      // Hot path: editor churn (the bulk of DOM mutations) happens while the
-      // window is focused, and a focused window can never trigger a bring-to-
-      // front (handleMatch no-ops). With no keyword filter there are also no
-      // deferred watchers to attach — so the whole scan is wasted work. Skip it.
-      // Gate on the main renderer window's focus — the same window
-      // handleMatch/bringToFront act on. Read via workspace.rootSplit.doc
-      // rather than activeDocument, which points at a focused pop-out and would
-      // wrongly skip a notice firing in the background main window. Cheap DOM
-      // read (no Electron IPC); a false negative only forgoes the optimization,
-      // never changes behavior.
-      if (this.cachedKeywords.length === 0 && this.app.workspace.rootSplit.doc.hasFocus()) return;
+      // Hot path: when an Obsidian window is focused, a notice cannot lead to a
+      // bring-to-front (handleMatch no-ops). With no keyword filter there are
+      // also no deferred watchers to attach, so the whole scan is wasted work.
+      // Use the same Electron focus check as handleMatch instead of
+      // document.hasFocus(): the DOM focus can read true while the app is in
+      // the background and would skip a real notice. This costs an Electron
+      // call per mutation batch; correctness wins over the old DOM shortcut.
+      if (this.cachedKeywords.length === 0 && this.isWindowFocused()) return;
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
           const node = mutation.addedNodes[i];
@@ -261,7 +269,10 @@ export default class BringToFrontPlugin extends Plugin {
         }
       }
     });
-    this.observer.observe(activeDocument.body, { childList: true, subtree: true });
+    // Watch the main workspace document, not activeDocument: Obsidian 1.14
+    // renders settings (and popouts) in other documents, so watching whichever
+    // one is focused would stop seeing notices after a settings change.
+    this.observer.observe(doc.body, { childList: true, subtree: true });
 
     this.checkExisting(selector);
   }
@@ -276,7 +287,7 @@ export default class BringToFrontPlugin extends Plugin {
   private checkExisting(selector: string) {
     if (this.isWindowFocused()) return;
     try {
-      const el = activeDocument.querySelector<HTMLElement>(selector);
+      const el = this.getMainDocument().querySelector<HTMLElement>(selector);
       if (el) this.evaluateTarget(el);
     } catch { /* getSelector validates; this only bounds the blast radius */ }
   }
@@ -351,7 +362,7 @@ export default class BringToFrontPlugin extends Plugin {
     }
 
     if (this.isWindowFocused()) {
-      this.debug("window already focused, skipping");
+      this.debug("an Obsidian window is already focused, skipping");
       return;
     }
 
@@ -370,9 +381,23 @@ export default class BringToFrontPlugin extends Plugin {
   }
 
   private isWindowFocused(): boolean {
-    const win = this.getElectronWindow();
-    if (win) return win.isFocused();
-    return activeDocument.hasFocus();
+    const remote = this.getElectronRemote();
+    if (!remote) return this.getMainDocument().hasFocus();
+    try {
+      // Obsidian 1.14 can put settings (and notes) in separate windows. The
+      // main window being blurred does not mean the app is in the background:
+      // raising it then would steal focus from another Obsidian window.
+      const windows = remote.BrowserWindow?.getAllWindows?.();
+      if (windows && windows.length > 0) {
+        return windows.some((w) => !w.isMinimized() && w.isVisible() && w.isFocused());
+      }
+      return remote.getCurrentWindow().isFocused();
+    } catch {
+      // A window can be destroyed while we iterate, or the remote call can
+      // fail. Treat focus as unknown and let the raise attempt continue rather
+      // than losing the notice inside the observer callback.
+      return false;
+    }
   }
 
   private async bringToFront() {
@@ -393,19 +418,23 @@ export default class BringToFrontPlugin extends Plugin {
     }
   }
 
-  private getElectronWindow(): ElectronBrowserWindow | null {
+  private getElectronRemote(): ElectronRemote | null {
     try {
       const electronWindow = window as ElectronWindow;
-      if (electronWindow.require) {
-        try {
-          const remote = electronWindow.require<ElectronRemote>("@electron/remote");
-          if (remote) return remote.getCurrentWindow();
-        } catch { /* fallback to legacy */ }
-        const electron = electronWindow.require<{ remote?: ElectronRemote }>("electron");
-        return electron?.remote?.getCurrentWindow() ?? null;
-      }
-    } catch { /* fall through */ }
-    return null;
+      if (!electronWindow.require) return null;
+      try {
+        const remote = electronWindow.require<ElectronRemote>("@electron/remote");
+        if (remote) return remote;
+      } catch { /* fallback to legacy */ }
+      const electron = electronWindow.require<{ remote?: ElectronRemote }>("electron");
+      return electron?.remote ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private getElectronWindow(): ElectronBrowserWindow | null {
+    return this.getElectronRemote()?.getCurrentWindow() ?? null;
   }
 
   // --- i18n ---

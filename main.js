@@ -197,6 +197,12 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     this.watchedTargets = /* @__PURE__ */ new WeakSet();
   }
   // --- Detection ---
+  // The main workspace document. rootSplit is not available yet during the
+  // earliest part of startup, so fall back to this renderer's document (the
+  // plugin runs in the main window).
+  getMainDocument() {
+    return this.app.workspace.rootSplit?.doc ?? document;
+  }
   getSelector() {
     if (this.settings.watchScope === "custom") {
       const custom = this.settings.customSelector.trim();
@@ -207,9 +213,10 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   }
   setupDetection() {
     const selector = this.getSelector();
+    const doc = this.getMainDocument();
     this.observer = new MutationObserver((mutations) => {
       if (this.isSilenced()) return;
-      if (this.cachedKeywords.length === 0 && this.app.workspace.rootSplit.doc.hasFocus()) return;
+      if (this.cachedKeywords.length === 0 && this.isWindowFocused()) return;
       for (const mutation of mutations) {
         for (let i = 0; i < mutation.addedNodes.length; i++) {
           const node = mutation.addedNodes[i];
@@ -219,7 +226,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
         }
       }
     });
-    this.observer.observe(activeDocument.body, { childList: true, subtree: true });
+    this.observer.observe(doc.body, { childList: true, subtree: true });
     this.checkExisting(selector);
   }
   checkNode(node, selector) {
@@ -232,7 +239,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
   checkExisting(selector) {
     if (this.isWindowFocused()) return;
     try {
-      const el = activeDocument.querySelector(selector);
+      const el = this.getMainDocument().querySelector(selector);
       if (el) this.evaluateTarget(el);
     } catch {
     }
@@ -294,7 +301,7 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
       return;
     }
     if (this.isWindowFocused()) {
-      this.debug("window already focused, skipping");
+      this.debug("an Obsidian window is already focused, skipping");
       return;
     }
     if (this.settings.focusInterval > 0) {
@@ -309,9 +316,17 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     void this.bringToFront();
   }
   isWindowFocused() {
-    const win = this.getElectronWindow();
-    if (win) return win.isFocused();
-    return activeDocument.hasFocus();
+    const remote = this.getElectronRemote();
+    if (!remote) return this.getMainDocument().hasFocus();
+    try {
+      const windows = remote.BrowserWindow?.getAllWindows?.();
+      if (windows && windows.length > 0) {
+        return windows.some((w) => !w.isMinimized() && w.isVisible() && w.isFocused());
+      }
+      return remote.getCurrentWindow().isFocused();
+    } catch {
+      return false;
+    }
   }
   async bringToFront() {
     try {
@@ -330,21 +345,23 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
       console.error("[Bring to Front]", e);
     }
   }
-  getElectronWindow() {
+  getElectronRemote() {
     try {
       const electronWindow = window;
-      if (electronWindow.require) {
-        try {
-          const remote = electronWindow.require("@electron/remote");
-          if (remote) return remote.getCurrentWindow();
-        } catch {
-        }
-        const electron = electronWindow.require("electron");
-        return electron?.remote?.getCurrentWindow() ?? null;
+      if (!electronWindow.require) return null;
+      try {
+        const remote = electronWindow.require("@electron/remote");
+        if (remote) return remote;
+      } catch {
       }
+      const electron = electronWindow.require("electron");
+      return electron?.remote ?? null;
     } catch {
+      return null;
     }
-    return null;
+  }
+  getElectronWindow() {
+    return this.getElectronRemote()?.getCurrentWindow() ?? null;
   }
   // --- i18n ---
   updateTranslations() {
