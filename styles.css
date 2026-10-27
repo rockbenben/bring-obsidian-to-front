@@ -1,17 +1,23 @@
 /* Bring to Front — settings tab styling.
- * Every rule is scoped under .btf-settings (added in main.ts display()) so this
- * file can never restyle Obsidian's settings pane outside this plugin's tab. */
+ * Every rule is scoped under .btf-settings (added by the settings tab in
+ * main.ts) so this file can never restyle Obsidian's settings pane outside
+ * this plugin's tab. */
 
 /* The host gives .setting-item-info and .setting-item-control the same
  * `flex: 1 1 auto` basis, so a wide field wins and the description column is
  * what collapses once the settings pane gets narrow. Give the text the
- * majority, and wrap the row instead of squeezing it further. */
+ * majority, and wrap the row instead of squeezing it further.
+ *
+ * Keep the info basis 0: the host stacks the row (flex-direction: column) in
+ * a narrow pane, where a px basis would become the row's height and leave the
+ * label stranded far above its control. The text still grows into the row's
+ * free space (and keeps a 220px minimum) in the normal row layout. */
 .btf-settings .setting-item {
   flex-wrap: wrap;
 }
 .btf-settings .setting-item-info {
-  flex: 1 1 220px;
-  min-width: 0;
+  flex: 1 1 0;
+  min-width: 220px;
 }
 .btf-settings .setting-item-control {
   flex: 0 1 42%;
