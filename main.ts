@@ -458,8 +458,10 @@ export default class BringToFrontPlugin extends Plugin {
     // like "zh"/"zh-TW"). It has been available since app 1.8.7, well below the
     // manifest minAppVersion.
     const obsidianLang = getObsidianLanguage();
-    const systemLang = navigator.language.toLowerCase();
-    return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
+    // "Follow Obsidian" must follow Obsidian even when the system locale
+    // differs; only fall back when the app cannot report a language.
+    if (obsidianLang) return obsidianLang.toLowerCase().includes("zh") ? "zh" : "en";
+    return navigator.language.toLowerCase().includes("zh") ? "zh" : "en";
   }
 
   // --- Settings ---

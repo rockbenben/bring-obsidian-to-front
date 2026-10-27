@@ -374,8 +374,8 @@ var BringToFrontPlugin = class extends import_obsidian.Plugin {
     if (this.settings.language === "zh") return "zh";
     if (this.settings.language === "en") return "en";
     const obsidianLang = (0, import_obsidian.getLanguage)();
-    const systemLang = navigator.language.toLowerCase();
-    return obsidianLang?.includes("zh") || systemLang.includes("zh") ? "zh" : "en";
+    if (obsidianLang) return obsidianLang.toLowerCase().includes("zh") ? "zh" : "en";
+    return navigator.language.toLowerCase().includes("zh") ? "zh" : "en";
   }
   // --- Settings ---
   async loadSettings() {
