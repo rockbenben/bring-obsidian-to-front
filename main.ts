@@ -703,8 +703,8 @@ class BringToFrontSettingTab extends PluginSettingTab {
     row.addText((tx) => {
       tx.setValue(String(this.plugin.settings.focusInterval))
         .onChange(async (v) => {
-          const n = Number.parseInt(v, 10);
-          if (v.trim() === "" || Number.isNaN(n) || n < 0) { flag(tx, true); return; }
+          const n = Number(v);
+          if (v.trim() === "" || !Number.isInteger(n) || n < 0) { flag(tx, true); return; }
           flag(tx, false);
           this.plugin.settings.focusInterval = n;
           await this.plugin.saveSettings();
