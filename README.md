@@ -41,7 +41,7 @@ Or open the [community plugin page](https://community.obsidian.md/plugins/bring-
 
 ## Usage
 
-There's nothing to set up — once enabled, it just works. Worth knowing: when the window already has focus it does nothing, so it never steals focus from itself while you're typing.
+There's nothing to set up — once enabled, it just works. Worth knowing: when any Obsidian window (including settings or a pop-out) already has focus, it does nothing, so it never steals focus from itself while you're typing.
 
 ### Example: never miss a reminder
 
@@ -67,7 +67,7 @@ Open **Settings → Third-party plugin → Bring to Front**. The defaults work w
 | ------------------ | ---------------------------------------------------------------------------------------------------- | ------------------------ |
 | Enabled            | Turn the raising off without losing your settings                                                     | On                       |
 | Plugin language    | Language of these settings                                                                            | Follow Obsidian          |
-| Keywords           | Only trigger when the pop-up text contains one of these comma-separated words (case-insensitive). Empty = any pop-up. | Empty                    |
+| Keywords           | Only trigger when the pop-up text contains one of these words (case-insensitive). Separate words with commas or new lines; Chinese commas work too. Empty = any pop-up. | Empty                    |
 | Watch for          | What to react to: Dialogs, Notifications, both, or your own selector                                   | Dialogs & notifications  |
 | Selector           | Your own CSS selector. Empty = dialogs and notifications. (Shown only when Watch for = Custom selector) | Empty                    |
 | Cooldown (seconds) | Shortest wait between two raises, so it doesn't interrupt repeatedly. 0 = no wait.                      | 5                        |
@@ -93,7 +93,7 @@ Ranges that cross midnight work as you'd expect: `22:00`–`08:00` covers the wh
 
 ## How it works
 
-Bring to Front watches the Obsidian window for new pop-ups — dialogs and notifications. When one appears while the window is in the background (and matches your optional keywords/scope), it raises the window via Electron's window APIs — restore if minimized, show if hidden, briefly pin on top, then focus. If the window is already focused, it stays out of the way.
+Bring to Front watches the main Obsidian window for new pop-ups — dialogs and notifications. When one appears while no Obsidian window has focus (and matches your optional keywords/scope), it raises the window via Electron's window APIs — restore if minimized, show if hidden, briefly pin on top, then focus. If any Obsidian window is already focused, it stays out of the way.
 
 ## Troubleshooting
 
@@ -101,7 +101,7 @@ Bring to Front watches the Obsidian window for new pop-ups — dialogs and notif
 | ------------------------ | ----------------------------------------------------------------------------------------- |
 | Pops up too often        | Increase **Cooldown**, or add **Keywords** to narrow what triggers it.              |
 | Interrupts at night      | Turn on **Quiet hours** and set a range such as 22:00–08:00.                              |
-| Doesn't pop up           | Make sure **Enabled** is on and Obsidian is actually in the background; clear **Keywords** and set **Watch for** to "Dialogs & notifications"; confirm the pop-up text matches your keywords. If you set a **Selector**, an unparseable one is flagged in red and ignored — the plugin keeps watching dialogs and notifications instead of going silent. |
+| Doesn't pop up           | Make sure **Enabled** is on and Obsidian is actually in the background; close the settings window and any pop-out note, since the plugin stays out of the way while any Obsidian window is focused; clear **Keywords** and set **Watch for** to "Dialogs & notifications"; confirm the pop-up text matches your keywords. If you set a **Selector**, an unparseable one is flagged in red and ignored — the plugin keeps watching dialogs and notifications instead of going silent. |
 | Want to see what happens | Enable **Debug mode**, open the developer console (Ctrl+Shift+I), and watch for `[Bring to Front]` messages. |
 
 ## Development
@@ -115,7 +115,7 @@ npm run lint   # same rules the Obsidian plugin review bot runs
 npm run build  # type-check + lint + production build
 ```
 
-`main.js` is the bundle of `main.ts`; `styles.css` is **not** imported by it — Obsidian loads the file straight from the plugin folder, so it has to be shipped alongside `main.js`. Every rule there is scoped under `.btf-settings`, which `display()` puts on the settings container, so the plugin cannot restyle the rest of Obsidian.
+`main.js` is the bundle of `main.ts`; `styles.css` is **not** imported by it — Obsidian loads the file straight from the plugin folder, so it has to be shipped alongside `main.js`. Every rule there is scoped under `.btf-settings`, which the settings tab adds to its container in `getSettingDefinitions()`, so the plugin cannot restyle the rest of Obsidian.
 
 ## Contributing
 
