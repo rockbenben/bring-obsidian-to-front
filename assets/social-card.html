@@ -1,0 +1,230 @@
+<!doctype html>
+<!--
+  GitHub social preview for rockbenben/bring-obsidian-to-front — 1280×640.
+  **Edit this file, not the PNG**, then re-render:
+    node "$SKILL_DIR/render.mjs" assets/social-card.html assets/social-card.png
+  ($SKILL_DIR = the installed html-shot skill directory)
+
+  Rules this card follows:
+  - GitHub only requires the 40px safe area (Settings → Social preview template);
+    the palette belongs to the product, so this is a dark Obsidian card.
+  - Information-bearing text is >= 40px: the feed shows this image ~440px wide
+    (0.344x), so anything smaller is texture and must not carry the message.
+    The window mock below 40px is deliberate — it reads as "an Obsidian window",
+    not as readable copy.
+  - Colours are Obsidian's real dark-theme tokens, sampled from app.css rather
+    than invented: base-00 #1e1e1e, base-20 #262626, base-30 #363636,
+    base-40 #555555, text #dadada / muted #b3b3b3,
+    accent hsl(258 88% 66%).
+  - The dialog is the Reminder-plugin pop-up from demo.gif (Done / Mute /
+    Snooze) and the task text is the example from README.md, so the card shows
+    the thing the plugin actually reacts to.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  * { margin: 0; box-sizing: border-box; }
+
+  body {
+    position: relative;
+    width: 1280px; height: 640px; overflow: hidden;
+    background: #17151d;
+    color: #dadada;
+    font-family: system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* one accent wash behind the window so "in front" has somewhere to glow */
+  .wash { position: absolute; inset: 0; pointer-events: none; }
+  .wash i { position: absolute; border-radius: 50%; filter: blur(90px); display: block; }
+  .w1 { width: 720px; height: 620px; right: -140px; top: -120px; background: hsl(258 88% 66% / .22); }
+  .w2 { width: 560px; height: 420px; left: -180px; bottom: -180px; background: hsl(258 88% 66% / .10); }
+
+  /* the 40px safe area, as a box every piece of content lives inside */
+  .safe {
+    position: absolute; inset: 40px;
+    display: flex; align-items: center; gap: 44px;
+  }
+
+  /* ---------- left: the message ---------- */
+  .copy { position: relative; flex: 1 1 auto; min-width: 0; z-index: 2; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 14px;
+    font-size: 40px; font-weight: 600; line-height: 1.1;
+    letter-spacing: .01em; color: #b3b3b3;
+  }
+  .eyebrow svg { width: 44px; height: 44px; flex: 0 0 44px; display: block; }
+
+  .wordmark {
+    margin-top: 22px;
+    font-size: 86px; font-weight: 700; line-height: 1.02;
+    letter-spacing: -.028em; color: #f4f2fa;
+    white-space: nowrap;
+  }
+
+  .tagline {
+    margin-top: 26px;
+    font-size: 46px; font-weight: 500; line-height: 1.16;
+    letter-spacing: -.012em; color: #dadada;
+  }
+  .tagline b { color: hsl(258 88% 72%); font-weight: 700; }
+
+  .facts {
+    margin-top: 30px;
+    font-size: 40px; font-weight: 600; line-height: 1.1; color: #b3b3b3;
+    white-space: nowrap;
+  }
+  .facts span { color: hsl(258 88% 66%); padding: 0 6px; }
+  /* ---------- right: the moment ---------- */
+  .stage { position: relative; flex: 0 0 520px; height: 470px; z-index: 1; }
+
+  .win { position: absolute; border-radius: 8px; overflow: hidden; }
+
+  /* the app you were actually looking at */
+  .other {
+    left: 0; top: 0; width: 356px; height: 236px;
+    background: #20242c; border: 1px solid #2f343d;
+    opacity: .78;
+  }
+  .other .bar { height: 28px; background: #262b33; display: flex; align-items: center; gap: 8px; padding: 0 10px; }
+  .other .dot { width: 9px; height: 9px; border-radius: 50%; background: #3a4149; }
+  .other .tab { width: 116px; height: 15px; border-radius: 4px; background: #333944; }
+  .other .ln { height: 9px; border-radius: 4px; background: #2b313a; margin: 12px 12px 0 12px; }
+  .other .ln.s { width: 62%; } .other .ln.m { width: 84%; }
+
+  /* where the window sat — the outline it travelled out of */
+  .echo {
+    border: 1px solid hsl(258 88% 66% / .45);
+    background: hsl(258 88% 66% / .06);
+    left: 62px; top: 136px; width: 444px; height: 300px;
+  }
+  .echo.e2 { left: 48px; top: 122px; border-color: hsl(258 88% 66% / .22); background: none; }
+
+  /* Obsidian, now on top */
+  .obs {
+    left: 76px; top: 150px; width: 444px; height: 300px;
+    background: #1e1e1e;
+    border: 1px solid hsl(258 88% 68% / .8);
+    box-shadow: 0 34px 70px rgba(0, 0, 0, .66), 0 0 0 1px rgba(0, 0, 0, .4),
+                0 0 52px hsl(258 88% 66% / .28);
+  }
+  .obs .chrome { display: flex; align-items: center; height: 30px; background: #262626; padding: 0 8px; gap: 6px; }
+  .obs .tabpill {
+    display: flex; align-items: center; gap: 6px; height: 20px; padding: 0 8px;
+    border-radius: 4px; background: #1e1e1e; border: 1px solid #363636;
+    font-size: 12px; color: #dadada;
+  }
+  .obs .tabpill i { width: 8px; height: 8px; border-radius: 2px; background: #555; display: block; }
+  .obs .winbtns { margin-left: auto; display: flex; gap: 10px; }
+  .obs .winbtns b { width: 10px; height: 10px; border: 1px solid #6a6a6a; display: block; border-radius: 2px; }
+
+  .obs .body { position: absolute; inset: 30px 0 0 0; display: flex; }
+  .ribbon { flex: 0 0 32px; background: #262626; border-right: 1px solid #303030; padding: 8px 0; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .ribbon i { width: 13px; height: 13px; border-radius: 3px; background: #4a4a4a; display: block; }
+  .ribbon i.on { background: hsl(258 88% 66%); }
+
+  .obs .status {
+    position: absolute; left: 32px; right: 0; bottom: 0; height: 24px;
+    display: flex; align-items: center; gap: 12px; padding: 0 14px;
+    border-top: 1px solid #2a2a2a; background: #1e1e1e;
+    font-size: 12px; color: #7a7a7a;
+  }
+  .obs .status b { font-weight: 500; }
+  .obs .status .due { color: hsl(258 88% 76%); }
+
+  .editor { position: relative; flex: 1; padding: 12px 16px; }
+  .editor h2 { font-size: 21px; font-weight: 700; color: #dadada; letter-spacing: -.01em; }
+  .task { margin-top: 10px; display: flex; align-items: center; gap: 7px; font-size: 14px; color: #b3b3b3; }
+  .task em { font-style: normal; color: hsl(258 88% 74%); }
+  .task .box { width: 12px; height: 12px; border: 1.5px solid hsl(258 88% 66%); border-radius: 3px; display: block; }
+
+  .scrim { position: absolute; inset: 0; background: rgba(10, 8, 16, .52); }
+
+  .modal {
+    position: absolute; left: 14px; right: 14px; top: 80px;
+    background: #2c2c2c; border: 1px solid #5a5a5a; border-radius: 8px;
+    padding: 12px 16px; box-shadow: 0 14px 30px rgba(0, 0, 0, .55);
+  }
+  .modal .x { position: absolute; right: 12px; top: 9px; color: #8a8a8a; font-size: 15px; }
+  .modal h3 { font-size: 19px; font-weight: 700; color: #f0f0f0; }
+  .modal .file { margin-top: 5px; font-size: 13px; color: hsl(258 88% 78%); text-decoration: underline; }
+  .btns { margin-top: 12px; display: flex; gap: 8px; }
+  .btn {
+    display: flex; align-items: center; gap: 5px;
+    height: 28px; padding: 0 11px; border-radius: 6px;
+    background: #3d3d3d; border: 1px solid #525252;
+    font-size: 14px; color: #e6e6e6;
+  }
+  .btn i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid #a0a0a0; display: block; }
+  .btn.go { background: hsl(258 88% 66%); border-color: hsl(258 88% 72%); color: #fff; }
+  .btn.go i { border-color: #fff; }
+
+  /* ---------- footer ---------- */
+  .credit {
+    position: absolute; left: 40px; bottom: 40px;
+    font-size: 22px; font-weight: 500; color: #8b86a0; letter-spacing: .01em;
+  }
+</style>
+</head>
+<body>
+  <div class="wash"><i class="w1"></i><i class="w2"></i></div>
+
+  <main class="safe">
+    <section class="copy">
+      <p class="eyebrow">
+        <svg viewBox="0 0 44 44" fill="none" aria-hidden="true">
+          <rect x="4" y="12" width="24" height="18" rx="3" stroke="#6f6a7d" stroke-width="2.5"/>
+          <rect x="14" y="6" width="26" height="20" rx="3" fill="#17151d" stroke="hsl(258 88% 66%)" stroke-width="2.5"/>
+          <path d="M14 12h26" stroke="hsl(258 88% 66%)" stroke-width="2.5" opacity=".55"/>
+        </svg>
+        Obsidian plugin
+      </p>
+      <h1 class="wordmark">Bring to Front</h1>
+      <p class="tagline">A dialog appears.<br /><b>Obsidian comes to you.</b></p>
+      <p class="facts">Zero config<span>&#183;</span>Quiet hours</p>
+    </section>
+
+    <section class="stage">
+      <div class="win other">
+        <div class="bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i><i class="tab"></i></div>
+        <div class="ln m"></div><div class="ln"></div><div class="ln s"></div><div class="ln m"></div><div class="ln s"></div>
+      </div>
+
+      <div class="win echo e2"></div>
+      <div class="win echo"></div>
+
+      <div class="win obs">
+        <div class="chrome">
+          <span class="tabpill"><i></i>My Notes.md</span>
+          <span class="winbtns"><b></b><b></b><b></b></span>
+        </div>
+        <div class="body">
+          <div class="ribbon"><i></i><i class="on"></i><i></i><i></i><i></i><i></i></div>
+          <div class="editor">
+            <h2>My Notes.md</h2>
+            <p class="task"><span class="box"></span>Submit report <em>@2026-06-09 14:30</em></p>
+            <div class="scrim"></div>
+            <div class="modal">
+              <span class="x">&#215;</span>
+              <h3>Submit report</h3>
+              <p class="file">My Notes.md</p>
+              <div class="btns">
+                <span class="btn go"><i></i>Done</span>
+                <span class="btn"><i></i>Mute</span>
+                <span class="btn">Snooze</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="status">
+          <b>5 words</b><b>35 characters</b><b class="due">1 card(s) due</b>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <p class="credit">rockbenben / bring-obsidian-to-front &nbsp;&#183;&nbsp; 365 Open Source Plan #005</p>
+</body>
+</html>
